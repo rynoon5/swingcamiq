@@ -1,8 +1,0 @@
-[build]
-builder = "nixpacks"
-
-[build.nixpacksPlan.phases.setup]
-nixPkgs = ["python312", "ffmpeg"]
-
-[deploy]
-startCommand = "uvicorn server:app --host 0.0.0.0 --port $PORT"
