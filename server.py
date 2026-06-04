@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 import anthropic
+import stripe
 
 app = FastAPI(title="SwingCamIQ API")
 
@@ -22,6 +23,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ── Stripe config ──────────────────────────────────────────────────────────────
+stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
+
+STRIPE_PRICE_IDS = {
+    "pack":    os.environ.get("STRIPE_PRICE_PACK",    "price_1TejKEQUZDUQHafGLnajWPc1"),
+    "monthly": os.environ.get("STRIPE_PRICE_MONTHLY", "price_1TejNWQUZDUQHafGnVDYGgTv"),
+    "annual":  os.environ.get("STRIPE_PRICE_ANNUAL",  "price_1TejOxQUZDUQHafGoGMLRwK4"),
+}
+
+STRIPE_PLAN_USES = {
+    "pack": 3,
+    "monthly": 9999,
+    "annual": 9999,
+}
 
 # ── Directory setup ────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).parent
@@ -194,6 +211,91 @@ def admin_waitlist():
     conn.close()
     return [dict(r) for r in rows]
 
+
+
+
+# ── Stripe checkout ────────────────────────────────────────────────────────────
+@app.post("/create-checkout-session")
+async def create_checkout_session(body: dict):
+    email = body.get("email", "").strip().lower()
+    plan  = body.get("plan", "monthly").strip()
+
+    if not email:
+        raise HTTPException(400, "Email required")
+    if plan not in STRIPE_PRICE_IDS:
+        raise HTTPException(400, "Invalid plan")
+
+    price_id = STRIPE_PRICE_IDS[plan]
+    base_url = body.get("base_url", "https://web-production-12512.up.railway.app")
+
+    mode = "subscription" if plan in ("monthly", "annual") else "payment"
+
+    session = stripe.checkout.Session.create(
+        payment_method_types=["card"],
+        mode=mode,
+        customer_email=email,
+        line_items=[{"price": price_id, "quantity": 1}],
+        success_url=f"{base_url}/payment-success?session_id={{CHECKOUT_SESSION_ID}}&email={email}&plan={plan}",
+        cancel_url=f"{base_url}/?cancelled=1",
+        metadata={"email": email, "plan": plan},
+    )
+    return {"url": session.url}
+
+
+@app.get("/payment-success")
+async def payment_success(session_id: str, email: str, plan: str):
+    """Called after successful Stripe payment — unlock user account."""
+    try:
+        # Verify with Stripe
+        session = stripe.checkout.Session.retrieve(session_id)
+        if session.payment_status in ("paid", "no_payment_required"):
+            conn = get_db()
+            user = get_or_create_user(conn, email.lower())
+            uses = STRIPE_PLAN_USES.get(plan, 9999)
+            conn.execute("""
+                UPDATE users SET plan=?, free_uses_used=0, free_uses_limit=?, plan_activated_at=?
+                WHERE email=?
+            """, (plan, uses, datetime.utcnow().isoformat(), email.lower()))
+            conn.commit()
+            conn.close()
+    except Exception as e:
+        print(f"Payment success error: {e}")
+
+    # Redirect to app
+    return FileResponse(str(STATIC_DIR / "index.html"))
+
+
+@app.post("/webhook")
+async def stripe_webhook(request):
+    """Stripe webhook for reliable payment confirmation."""
+    payload = await request.body()
+    sig = request.headers.get("stripe-signature", "")
+    webhook_secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+
+    try:
+        if webhook_secret:
+            event = stripe.Webhook.construct_event(payload, sig, webhook_secret)
+        else:
+            event = stripe.Event.construct_from(json.loads(payload), stripe.api_key)
+    except Exception as e:
+        raise HTTPException(400, str(e))
+
+    if event.type in ("checkout.session.completed", "payment_intent.succeeded"):
+        session = event.data.object
+        email = session.get("customer_email") or session.metadata.get("email", "")
+        plan  = session.metadata.get("plan", "monthly")
+        if email:
+            conn = get_db()
+            get_or_create_user(conn, email.lower())
+            uses = STRIPE_PLAN_USES.get(plan, 9999)
+            conn.execute("""
+                UPDATE users SET plan=?, free_uses_used=0, free_uses_limit=?, plan_activated_at=?
+                WHERE email=?
+            """, (plan, uses, datetime.utcnow().isoformat(), email.lower()))
+            conn.commit()
+            conn.close()
+
+    return {"status": "ok"}
 
 
 # ── Prompts ────────────────────────────────────────────────────────────────────

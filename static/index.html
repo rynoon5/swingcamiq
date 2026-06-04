@@ -416,8 +416,8 @@ nav{background:var(--forest);height:60px;display:flex;align-items:center;padding
       <input class="modal-input" type="email" id="paywallEmail" placeholder="your@email.com" autocomplete="email"
         style="margin-bottom:0" onkeydown="if(event.key==='Enter')submitWaitlist()">
     </div>
-    <button class="paywall-submit" onclick="submitWaitlist()">Join Early Access List →</button>
-    <div class="paywall-fine">We'll email you when payments go live — founder pricing guaranteed.</div>
+    <button class="paywall-submit" onclick="startCheckout()">Unlock SwingCamIQ →</button>
+    <div class="paywall-fine">Secure payment via Stripe. Cancel anytime.</div>
   </div>
 </div>
 
@@ -1155,6 +1155,11 @@ function hidePaywall() {
 }
 
 async function submitWaitlist() {
+  // Keep for backwards compat - now calls startCheckout
+  startCheckout();
+}
+
+async function startCheckout() {
   const emailEl = document.getElementById('paywallEmail');
   const email = emailEl.value.trim();
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -1165,21 +1170,36 @@ async function submitWaitlist() {
   emailEl.style.borderColor = '';
 
   const btn = document.querySelector('.paywall-submit');
-  btn.textContent = 'Joining list…';
+  btn.textContent = 'Redirecting to checkout…';
   btn.disabled = true;
 
   try {
+    // Also save to waitlist for tracking
     await fetch('/waitlist', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, plan: selectedPlan })
+    }).catch(() => {});
+
+    const res = await fetch('/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        plan: selectedPlan,
+        base_url: window.location.origin
+      })
     });
-    btn.textContent = "You\'re on the list! We\'ll be in touch.";
-    btn.style.background = 'var(--forest)';
-    setTimeout(() => hidePaywall(), 2500);
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error('No checkout URL returned');
+    }
   } catch(e) {
-    btn.textContent = 'Join Early Access List →';
+    btn.textContent = 'Unlock SwingCamIQ →';
     btn.disabled = false;
+    alert('Something went wrong. Please try again.');
   }
 }
 
