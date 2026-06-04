@@ -1,0 +1,1292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwingCamIQ</title>
+<meta name="theme-color" content="#1c3829">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SwingCamIQ">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Lato:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream:#f4efe4;--cream2:#ede5d0;--cream3:#e4d9c0;
+  --forest:#1c3829;--forest2:#284f3a;--forest3:#3a6b50;--forest-pale:#eaf1eb;
+  --sienna:#b04e28;--sienna2:#cc6235;--sienna-pale:#faf0ea;
+  --gold:#b8860b;--gold-pale:#fdf6de;
+  --ink:#1a1a16;--ink2:#3d3d35;--ink3:#6b6b5e;--ink4:#9a9a8e;
+  --border:#d8cebc;--border2:#c8bca8;
+  --white:#fff;
+  --radius:4px;
+  --shadow:0 2px 16px rgba(28,56,41,.08),0 1px 3px rgba(28,56,41,.05);
+  --shadow-lg:0 8px 40px rgba(28,56,41,.13),0 2px 8px rgba(28,56,41,.07);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--cream);color:var(--ink);font-family:'Lato',sans-serif;font-weight:400;line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ── NAV ── */
+nav{background:var(--forest);height:60px;display:flex;align-items:center;padding:0 24px;gap:0;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.nav-logo{font-family:'Playfair Display',serif;font-weight:900;font-size:22px;color:var(--cream);letter-spacing:-.3px;margin-right:auto;cursor:pointer;text-decoration:none}
+.nav-logo em{font-style:italic;color:#7ec492}
+.nav-links{display:flex;gap:4px}
+.nav-btn{background:none;border:none;color:#a8c4b0;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:8px 14px;border-radius:var(--radius);cursor:pointer;transition:all .15s;font-family:'Lato',sans-serif}
+.nav-btn:hover{color:var(--cream);background:rgba(255,255,255,.08)}
+.nav-btn.active{color:#7ec492;background:rgba(126,196,146,.1)}
+
+/* ── PAGES ── */
+.page{display:none;min-height:calc(100vh - 60px);animation:fadeIn .25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── DASHBOARD ── */
+.dash-hero{background:var(--forest);padding:52px 24px 64px;text-align:center;position:relative;overflow:hidden}
+.dash-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:36px;background:var(--cream);clip-path:ellipse(55% 100% at 50% 100%)}
+.dash-eyebrow{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#7ec492;font-weight:700;margin-bottom:12px}
+.dash-hero h1{font-family:'Playfair Display',serif;font-size:clamp(32px,5vw,52px);font-weight:900;color:var(--cream);line-height:1.1;margin-bottom:12px}
+.dash-hero h1 em{font-style:italic;color:#7ec492}
+.dash-hero p{font-size:16px;color:#a8c4b0;font-weight:300;max-width:420px;margin:0 auto 28px}
+.btn-hero{display:inline-flex;align-items:center;gap:8px;background:var(--sienna);color:#fff;border:none;padding:15px 32px;border-radius:var(--radius);font-family:'Playfair Display',serif;font-size:17px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-hero:hover{background:var(--sienna2);transform:translateY(-1px);box-shadow:0 6px 20px rgba(176,78,40,.35)}
+.dash-content{max-width:900px;margin:0 auto;padding:40px 20px 60px}
+.dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:36px}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;box-shadow:var(--shadow)}
+.stat-num{font-family:'Playfair Display',serif;font-size:40px;font-weight:900;color:var(--forest);line-height:1}
+.stat-num.good{color:#1a5c2a}
+.stat-num.warn{color:var(--gold)}
+.stat-lbl{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--ink3);font-weight:700;margin-top:6px}
+.section-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--forest);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.recent-list{display:flex;flex-direction:column;gap:10px}
+.recent-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .15s;box-shadow:var(--shadow)}
+.recent-card:hover{border-color:var(--forest3);box-shadow:var(--shadow-lg);transform:translateX(3px)}
+.rc-score{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;font-weight:900;flex-shrink:0}
+.rc-info{flex:1;min-width:0}
+.rc-headline{font-size:14px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc-meta{font-size:12px;color:var(--ink3);margin-top:2px}
+.rc-rating{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);flex-shrink:0}
+.empty-state{text-align:center;padding:48px 24px;color:var(--ink3)}
+.empty-state .e-icon{font-size:48px;margin-bottom:12px}
+.empty-state p{font-size:15px;font-style:italic}
+
+/* ── EMAIL GATE MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(28,56,41,.6);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s ease}
+.modal-overlay.hidden{display:none}
+.modal-box{background:var(--white);border-radius:8px;padding:40px 36px;max-width:440px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+.modal-logo{font-family:'Playfair Display',serif;font-weight:900;font-size:20px;color:var(--forest);margin-bottom:4px}
+.modal-logo em{font-style:italic;color:#7ec492}
+.modal-eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--ink4);font-weight:700;margin-bottom:20px}
+.modal-box h2{font-family:'Playfair Display',serif;font-size:24px;font-weight:900;color:var(--forest);line-height:1.2;margin-bottom:8px}
+.modal-box p{font-size:14px;color:var(--ink3);margin-bottom:24px;line-height:1.6}
+.modal-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:'Lato',sans-serif;font-size:15px;color:var(--ink);background:var(--cream);margin-bottom:12px;transition:border-color .15s}
+.modal-input:focus{outline:none;border-color:var(--forest)}
+.modal-submit{width:100%;padding:14px;background:var(--sienna);color:#fff;border:none;border-radius:var(--radius);font-family:'Playfair Display',serif;font-size:17px;font-weight:700;cursor:pointer;transition:all .2s}
+.modal-submit:hover{background:var(--sienna2)}
+.modal-skip{width:100%;padding:8px;background:none;border:none;color:var(--ink4);font-size:12px;cursor:pointer;font-family:'Lato',sans-serif;margin-top:6px}
+.modal-skip:hover{color:var(--ink3)}
+.modal-fine{font-size:11px;color:var(--ink4);text-align:center;margin-top:8px;font-style:italic}
+.modal-free-badge{display:inline-flex;align-items:center;gap:6px;background:var(--forest-pale);border:1px solid #b8d4bf;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--forest);letter-spacing:.5px;margin-bottom:16px}
+
+/* ── ANALYZE PAGE ── */
+.analyze-wrap{max-width:720px;margin:0 auto;padding:36px 20px 60px}
+.form-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;margin-bottom:20px}
+.fc-header{background:var(--forest-pale);border-bottom:1px solid var(--border);padding:18px 24px;display:flex;align-items:center;gap:12px}
+.fc-badge{width:26px;height:26px;background:var(--forest);color:var(--cream);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.fc-header h2{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--forest)}
+.fc-body{padding:24px}
+.upload-zone{border:2px dashed var(--border);border-radius:var(--radius);padding:44px 24px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--cream)}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--forest);background:var(--forest-pale)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.uz-icon{width:48px;height:48px;background:var(--forest);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.uz-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--forest);margin-bottom:4px}
+.uz-sub{font-size:13px;color:var(--ink3);font-style:italic}
+.file-chosen{margin-top:10px;font-size:13px;color:var(--forest);font-weight:700;display:none}
+.video-preview{margin-top:16px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:none}
+.video-preview video{width:100%;display:block;max-height:240px;object-fit:contain;background:#000}
+.fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg.full{grid-column:1/-1}
+.fg label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ink3);font-weight:700}
+.fg select,.fg input[type=text],.fg textarea{background:var(--cream);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;font-family:'Lato',sans-serif;font-size:14px;color:var(--ink);transition:border-color .15s;appearance:none;width:100%}
+.fg select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6b5e' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer}
+.fg textarea{resize:vertical;min-height:72px;line-height:1.5}
+.fg select:focus,.fg input:focus,.fg textarea:focus{outline:none;border-color:var(--forest)}
+.fg .hint{font-size:11px;color:var(--ink4);font-style:italic}
+.btn-analyze{margin-top:20px;width:100%;padding:16px;background:var(--sienna);color:#fff;border:none;border-radius:var(--radius);font-family:'Playfair Display',serif;font-size:18px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-analyze:hover:not(:disabled){background:var(--sienna2);transform:translateY(-1px);box-shadow:0 6px 20px rgba(176,78,40,.3)}
+.btn-analyze:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.err-box{margin-top:14px;background:#fef2f2;border:1px solid #fca5a5;border-radius:var(--radius);padding:12px 16px;color:#b91c1c;font-size:13px;display:none}
+
+/* ── PROGRESS ── */
+.progress-wrap{background:var(--forest);border-radius:var(--radius);padding:28px;text-align:center;margin-bottom:20px;display:none}
+.spin{width:48px;height:48px;border:3px solid rgba(126,196,146,.3);border-top-color:#7ec492;border-radius:50%;margin:0 auto 16px;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.progress-wrap h3{font-family:'Playfair Display',serif;font-size:20px;color:var(--cream);margin-bottom:6px}
+.progress-wrap p{font-size:13px;color:#a8c4b0;font-style:italic}
+.progress-steps{display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.ps{padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.25);transition:all .3s}
+.ps.active{border-color:#7ec492;color:#7ec492;background:rgba(126,196,146,.1)}
+.ps.done{border-color:rgba(255,255,255,.1);color:rgba(255,255,255,.15);text-decoration:line-through}
+
+/* ── SESSION / RESULTS ── */
+.session-wrap{max-width:860px;margin:0 auto;padding:32px 20px 80px}
+.session-back{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--ink3);cursor:pointer;margin-bottom:24px;transition:color .15s;background:none;border:none;padding:0}
+.session-back:hover{color:var(--forest)}
+.headline-band{background:var(--forest);border-radius:var(--radius);padding:28px 32px;margin-bottom:16px}
+.hb-quote{font-family:'Playfair Display',serif;font-size:clamp(18px,2.5vw,24px);font-style:italic;color:var(--cream);line-height:1.35;margin-bottom:20px}
+.hb-scores{display:flex;gap:12px;flex-wrap:wrap}
+.hbs{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:var(--radius);padding:10px 18px;text-align:center}
+.hbs-num{font-family:'Playfair Display',serif;font-size:30px;font-weight:900;color:#7ec492;line-height:1;display:block}
+.hbs-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:700;display:block;margin-top:3px}
+.miss-band{background:var(--sienna-pale);border:1px solid #e8c0a8;border-left:4px solid var(--sienna);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;display:none}
+.miss-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--sienna);font-weight:700;margin-bottom:6px}
+.miss-band p{font-size:14px;color:var(--ink);line-height:1.65}
+.priority-band{background:var(--sienna);border-radius:var(--radius);padding:24px 28px;margin-bottom:16px}
+.pb-eye{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,.5);font-weight:700;margin-bottom:6px}
+.pb-fault{font-family:'Playfair Display',serif;font-size:20px;color:#fff;margin-bottom:10px}
+.pb-why{font-size:14px;color:rgba(255,255,255,.8);font-style:italic;margin-bottom:16px;line-height:1.6}
+.drill-box{background:rgba(0,0,0,.18);border-radius:var(--radius);padding:14px 18px;margin-bottom:14px}
+.drill-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.45);font-weight:700;margin-bottom:6px}
+.drill-box p{font-size:13px;color:rgba(255,255,255,.85);line-height:1.65}
+.pb-feel{font-family:'Playfair Display',serif;font-size:16px;font-style:italic;color:rgba(255,255,255,.85);border-top:1px solid rgba(255,255,255,.15);padding-top:14px}
+.pb-feel::before{content:'Feel: ';font-style:normal;font-family:'Lato',sans-serif;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:700;display:block;margin-bottom:3px}
+.phases-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-bottom:16px}
+.phase-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);animation:riseIn .35s ease both}
+@keyframes riseIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ph-header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--cream3);background:var(--cream)}
+.ph-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--forest);display:flex;align-items:center;gap:6px}
+.ph-badge{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:2px 8px;border-radius:2px}
+.ph-badge.great{background:#d4edda;color:#1a5c2a}
+.ph-badge.solid{background:var(--gold-pale);color:var(--gold)}
+.ph-badge.needs-work{background:#fff3e0;color:#8a4800}
+.ph-badge.fix-first{background:#fdecea;color:#9c1a0a;border:1px solid #f5c0bc}
+.ph-body{padding:14px 16px}
+.ph-sec{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);font-weight:700;margin-bottom:3px;margin-top:10px}
+.ph-sec:first-child{margin-top:0}
+.ph-body p{font-size:13px;color:var(--ink2);line-height:1.6}
+.feel-cue{background:var(--forest-pale);border-left:3px solid var(--forest);padding:7px 10px;font-size:12px;color:var(--forest);font-style:italic;margin-top:4px;border-radius:0 2px 2px 0}
+.strengths-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:22px 24px;margin-bottom:16px;box-shadow:var(--shadow)}
+.strengths-card h3{font-family:'Playfair Display',serif;font-size:18px;color:var(--forest);margin-bottom:14px}
+.str-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--cream3);font-size:14px;color:var(--ink2);line-height:1.5}
+.str-item:last-child{border-bottom:none}
+.str-dot{width:7px;height:7px;background:var(--forest3);border-radius:50%;flex-shrink:0;margin-top:6px}
+.enc-card{background:var(--gold-pale);border:1px solid #e0cc88;border-radius:var(--radius);padding:20px 24px;margin-bottom:20px}
+.enc-card p{font-family:'Playfair Display',serif;font-size:16px;font-style:italic;color:var(--ink);line-height:1.65}
+
+/* ── FRAME SLIDESHOW ── */
+.frame-slideshow{background:var(--forest);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow-lg)}
+.fs-header{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08)}
+.fs-title{font-family:'Playfair Display',serif;font-size:15px;color:var(--cream);display:flex;align-items:center;gap:8px}
+.fs-counter{font-size:11px;letter-spacing:1px;color:rgba(255,255,255,.35);font-weight:700;font-family:'Lato',sans-serif}
+.fs-stage{position:relative;background:#000;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:zoom-in}
+.fs-stage img{width:100%;height:100%;object-fit:contain;display:block;transition:opacity .15s ease}
+.fs-stage img.fading{opacity:0}
+.fs-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(28,56,41,.75);border:1px solid rgba(255,255,255,.15);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;color:#fff;font-size:20px;line-height:1;backdrop-filter:blur(4px);z-index:2}
+.fs-nav:hover{background:rgba(28,56,41,.95);border-color:rgba(255,255,255,.4)}
+.fs-nav.prev{left:12px}
+.fs-nav.next{right:12px}
+.fs-nav:disabled{opacity:.2;cursor:not-allowed}
+.fs-label-band{padding:10px 20px 8px;display:flex;align-items:center;justify-content:space-between}
+.fs-phase-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#7ec492;font-weight:700}
+.fs-dots{display:flex;gap:5px;align-items:center}
+.fs-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2);cursor:pointer;transition:all .2s;border:none;padding:0;flex-shrink:0}
+.fs-dot.active{background:#7ec492;width:18px;border-radius:3px}
+.fs-thumbnails{display:flex;gap:4px;padding:0 16px 14px;overflow-x:auto;scrollbar-width:none}
+.fs-thumbnails::-webkit-scrollbar{display:none}
+.fs-thumb{width:64px;height:42px;object-fit:cover;border-radius:2px;cursor:pointer;opacity:.4;transition:all .15s;flex-shrink:0;border:2px solid transparent}
+.fs-thumb.active{opacity:1;border-color:#7ec492}
+.fs-thumb:hover{opacity:.75}
+
+/* ── FULLSCREEN ── */
+.fs-fullscreen{position:fixed;inset:0;background:rgba(0,0,0,.94);z-index:600;display:flex;align-items:center;justify-content:center;animation:fadeIn .15s ease}
+.fs-fullscreen.hidden{display:none}
+.fs-full-img{max-width:90vw;max-height:85vh;object-fit:contain;border-radius:4px;display:block}
+.fs-full-close{position:absolute;top:20px;right:24px;background:none;border:none;color:rgba(255,255,255,.5);font-size:28px;cursor:pointer;line-height:1;transition:color .15s}
+.fs-full-close:hover{color:#fff}
+.fs-full-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:22px;transition:all .15s}
+.fs-full-nav:hover{background:rgba(255,255,255,.18)}
+.fs-full-nav.prev{left:24px}
+.fs-full-nav.next{right:24px}
+.fs-full-label{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:700;white-space:nowrap}
+
+/* ── CHAT ── */
+.chat-section{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.chat-header{background:var(--forest);padding:16px 20px;display:flex;align-items:center;gap:10px}
+.chat-header h3{font-family:'Playfair Display',serif;font-size:16px;color:var(--cream)}
+.chat-header p{font-size:12px;color:#a8c4b0;font-weight:300}
+.chat-dot{width:8px;height:8px;background:#7ec492;border-radius:50%;animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.chat-messages{padding:16px;min-height:120px;max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.chat-msg{max-width:82%;padding:10px 14px;border-radius:var(--radius);font-size:13px;line-height:1.6;animation:fadeIn .2s ease}
+.chat-msg.user{background:var(--forest);color:var(--cream);align-self:flex-end;border-bottom-right-radius:2px}
+.chat-msg.assistant{background:var(--cream2);color:var(--ink);align-self:flex-start;border-bottom-left-radius:2px}
+.chat-msg.thinking{background:var(--cream2);color:var(--ink3);font-style:italic;align-self:flex-start}
+.chat-input-row{display:flex;border-top:1px solid var(--border)}
+.chat-input-row input{flex:1;padding:12px 16px;border:none;background:var(--cream);font-family:'Lato',sans-serif;font-size:14px;color:var(--ink);outline:none}
+.chat-send{padding:12px 20px;background:var(--sienna);color:#fff;border:none;font-weight:700;font-size:13px;cursor:pointer;transition:background .15s;font-family:'Lato',sans-serif}
+.chat-send:hover{background:var(--sienna2)}
+.chat-send:disabled{opacity:.5;cursor:not-allowed}
+.chat-suggestions{padding:8px 16px 12px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);background:var(--cream)}
+.sug-btn{background:none;border:1px solid var(--border2);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--ink3);cursor:pointer;transition:all .15s;font-family:'Lato',sans-serif}
+.sug-btn:hover{border-color:var(--forest);color:var(--forest)}
+
+/* ── HISTORY ── */
+.history-wrap{max-width:800px;margin:0 auto;padding:36px 20px 60px}
+.history-list{display:flex;flex-direction:column;gap:10px}
+.hist-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .15s;box-shadow:var(--shadow);position:relative}
+.hist-card:hover{border-color:var(--forest3);box-shadow:var(--shadow-lg)}
+.hc-del{position:absolute;top:12px;right:12px;background:none;border:none;color:var(--ink4);cursor:pointer;font-size:16px;opacity:0;transition:opacity .15s;padding:2px 6px}
+.hist-card:hover .hc-del{opacity:1}
+.hc-del:hover{color:var(--sienna)}
+.hc-score{width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:17px;font-weight:900;flex-shrink:0}
+.hc-info{flex:1;min-width:0}
+.hc-headline{font-size:13px;font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hc-meta{font-size:11px;color:var(--ink3);margin-top:2px}
+.score-trend{margin-bottom:28px}
+.trend-chart{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow)}
+.trend-title{font-family:'Playfair Display',serif;font-size:16px;color:var(--forest);margin-bottom:14px}
+#trendCanvas{width:100%;height:80px;display:block}
+
+/* ── MOBILE UPLOAD BUTTONS ── */
+.mobile-upload-btns{display:none;flex-direction:column;gap:12px;margin-bottom:16px}
+.mob-upload-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:18px;border-radius:var(--radius);font-family:'Playfair Display',serif;font-size:17px;font-weight:700;cursor:pointer;transition:all .2s;border:none}
+.mob-upload-btn.primary{background:var(--forest);color:var(--cream)}
+.mob-upload-btn.primary:hover{background:var(--forest2)}
+.mob-upload-btn.secondary{background:var(--white);color:var(--forest);border:2px solid var(--border)}
+.mob-upload-btn.secondary:hover{border-color:var(--forest)}
+.file-chosen-mobile{margin-top:8px;font-size:13px;color:var(--forest);font-weight:700;text-align:center;display:none}
+@media(max-width:600px){
+  .mobile-upload-btns{display:flex}
+  .upload-zone{display:none}
+}
+@media(min-width:601px){
+  .mobile-upload-btns{display:none}
+  .upload-zone{display:block}
+}
+
+/* ── INSTALL BANNER ── */
+.install-banner{background:var(--forest);color:var(--cream);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;position:sticky;top:60px;z-index:100;animation:fadeIn .3s ease}
+.install-banner.hidden{display:none}
+.install-banner strong{font-weight:700}
+.install-btn{background:#7ec492;color:var(--forest);border:none;border-radius:var(--radius);padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Lato',sans-serif}
+.install-dismiss{background:none;border:none;color:rgba(255,255,255,.4);font-size:18px;cursor:pointer;padding:0;line-height:1}
+
+@media(max-width:600px){
+  .nav-btn{padding:6px 8px;font-size:11px;letter-spacing:.8px}
+  .btn-analyze{font-size:16px;padding:18px}
+  .modal-box{padding:28px 20px}
+  .fs-nav{width:36px;height:36px;font-size:18px}
+  .chat-input-row input{font-size:16px}
+}
+
+/* ── PAYWALL ── */
+.paywall-overlay{position:fixed;inset:0;background:rgba(28,56,41,.7);backdrop-filter:blur(6px);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn .25s ease;overflow-y:auto}
+.paywall-overlay.hidden{display:none}
+.paywall-box{background:var(--white);border-radius:8px;padding:36px 32px;max-width:520px;width:100%;box-shadow:0 24px 80px rgba(0,0,0,.3)}
+.paywall-logo{font-family:"Playfair Display",serif;font-weight:900;font-size:20px;color:var(--forest);margin-bottom:4px}
+.paywall-logo em{font-style:italic;color:#7ec492}
+.paywall-eyebrow{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--ink4);font-weight:700;margin-bottom:16px}
+.paywall-box h2{font-family:"Playfair Display",serif;font-size:22px;font-weight:900;color:var(--forest);line-height:1.2;margin-bottom:8px}
+.paywall-box p{font-size:14px;color:var(--ink3);margin-bottom:24px;line-height:1.6}
+.pricing-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.pricing-card{border:1.5px solid var(--border);border-radius:var(--radius);padding:16px 18px;cursor:pointer;transition:all .15s;position:relative;display:flex;align-items:center;gap:14px}
+.pricing-card:hover{border-color:var(--forest);background:var(--forest-pale)}
+.pricing-card.selected{border-color:var(--forest);background:var(--forest-pale);box-shadow:0 0 0 2px var(--forest)}
+.pricing-card.featured{border-color:var(--sienna);background:var(--sienna-pale)}
+.pricing-card.featured.selected{box-shadow:0 0 0 2px var(--sienna)}
+.pc-badge{position:absolute;top:-10px;right:14px;background:var(--sienna);color:#fff;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:10px}
+.pc-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.pricing-card.selected .pc-radio{border-color:var(--forest);background:var(--forest)}
+.pricing-card.featured.selected .pc-radio{border-color:var(--sienna);background:var(--sienna)}
+.pc-radio-dot{width:6px;height:6px;background:#fff;border-radius:50%;opacity:0;transition:opacity .15s}
+.pricing-card.selected .pc-radio-dot{opacity:1}
+.pc-info{flex:1}
+.pc-name{font-family:"Playfair Display",serif;font-size:16px;font-weight:700;color:var(--forest);margin-bottom:2px}
+.pc-desc{font-size:12px;color:var(--ink3)}
+.pc-price{font-family:"Playfair Display",serif;font-size:20px;font-weight:900;color:var(--forest);text-align:right;white-space:nowrap}
+.pc-per{font-size:10px;color:var(--ink4);font-weight:400;display:block;text-align:right}
+.paywall-email-wrap{margin-bottom:14px}
+.paywall-submit{width:100%;padding:14px;background:var(--sienna);color:#fff;border:none;border-radius:var(--radius);font-family:"Playfair Display",serif;font-size:17px;font-weight:700;cursor:pointer;transition:all .2s}
+.paywall-submit:hover{background:var(--sienna2)}
+.paywall-fine{font-size:11px;color:var(--ink4);text-align:center;margin-top:10px;font-style:italic}
+.uses-badge{display:inline-flex;align-items:center;gap:6px;background:var(--forest-pale);border:1px solid #b8d4bf;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:700;color:var(--forest);margin-bottom:16px}
+.uses-badge.warn{background:#fff3e0;border-color:#e8c878;color:#8a4800}
+.uses-badge.empty{background:#fdecea;border-color:#f5c0bc;color:#9c1a0a}
+
+@media(max-width:600px){
+  .paywall-box{padding:24px 18px}
+  .pricing-cards{gap:8px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" onclick="showPage('dashboard')">SwingCam<em>IQ</em></a>
+  <div class="nav-links">
+    <button class="nav-btn active" data-page="dashboard" onclick="showPage('dashboard')">Home</button>
+    <button class="nav-btn" data-page="analyze" onclick="showPage('analyze')">Analyze</button>
+    <button class="nav-btn" data-page="history" onclick="showPage('history')">History</button>
+  </div>
+</nav>
+
+<!-- ══ INSTALL BANNER ══ -->
+<div class="install-banner hidden" id="installBanner">
+  <div><strong>Add to Home Screen</strong> — use SwingCamIQ like an app</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="install-btn" onclick="installPWA()">Install</button>
+    <button class="install-dismiss" onclick="dismissInstall()">✕</button>
+  </div>
+</div>
+
+<!-- ══ EMAIL GATE MODAL ══ -->
+<div class="modal-overlay hidden" id="emailModal">
+  <div class="modal-box">
+    <div class="modal-logo">SwingCam<em>IQ</em></div>
+    <div class="modal-eyebrow">Video Swing Coach</div>
+    <div class="modal-free-badge">
+      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      2 free analyses included
+    </div>
+    <h2>Get your free swing report</h2>
+    <p>Drop your email and we'll send a copy of your analysis — plus tips to keep improving between sessions.</p>
+    <input class="modal-input" type="email" id="modalEmail" placeholder="your@email.com" autocomplete="email"
+      onkeydown="if(event.key==='Enter')submitEmailGate()">
+    <button class="modal-submit" onclick="submitEmailGate()">Analyze My Swing →</button>
+    <button class="modal-skip" onclick="skipEmail()">Skip for now</button>
+    <div class="modal-fine">No spam. Unsubscribe any time.</div>
+  </div>
+</div>
+
+
+<!-- ══ PAYWALL MODAL ══ -->
+<div class="paywall-overlay hidden" id="paywallModal">
+  <div class="paywall-box">
+    <div class="paywall-logo">SwingCam<em>IQ</em></div>
+    <div class="paywall-eyebrow">Video Swing Coach</div>
+    <h2>You've used your 2 free analyses</h2>
+    <p>Choose a plan to keep improving. Join the early access list and we'll notify you the moment payments go live — with a founder discount.</p>
+
+    <div class="pricing-cards" id="pricingCards">
+      <div class="pricing-card" onclick="selectPlan(this,'pack')" data-plan="pack">
+        <div class="pc-radio"><div class="pc-radio-dot"></div></div>
+        <div class="pc-info">
+          <div class="pc-name">Analysis Pack</div>
+          <div class="pc-desc">5 swing analyses — never expires</div>
+        </div>
+        <div>
+          <div class="pc-price">$4.99</div>
+          <div class="pc-per">one time</div>
+        </div>
+      </div>
+
+      <div class="pricing-card featured" onclick="selectPlan(this,'monthly')" data-plan="monthly">
+        <div class="pc-badge">Most Popular</div>
+        <div class="pc-radio"><div class="pc-radio-dot"></div></div>
+        <div class="pc-info">
+          <div class="pc-name">Monthly</div>
+          <div class="pc-desc">Unlimited analyses + chat coaching</div>
+        </div>
+        <div>
+          <div class="pc-price">$9.99</div>
+          <div class="pc-per">per month</div>
+        </div>
+      </div>
+
+      <div class="pricing-card" onclick="selectPlan(this,'annual')" data-plan="annual">
+        <div class="pc-radio"><div class="pc-radio-dot"></div></div>
+        <div class="pc-info">
+          <div class="pc-name">Season Pass</div>
+          <div class="pc-desc">Full year, unlimited — best value</div>
+        </div>
+        <div>
+          <div class="pc-price">$49.99</div>
+          <div class="pc-per">per year</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="paywall-email-wrap">
+      <input class="modal-input" type="email" id="paywallEmail" placeholder="your@email.com" autocomplete="email"
+        style="margin-bottom:0" onkeydown="if(event.key==='Enter')submitWaitlist()">
+    </div>
+    <button class="paywall-submit" onclick="submitWaitlist()">Join Early Access List →</button>
+    <div class="paywall-fine">We'll email you when payments go live — founder pricing guaranteed.</div>
+  </div>
+</div>
+
+<!-- ══ FULLSCREEN VIEWER ══ -->
+<div class="fs-fullscreen hidden" id="fsFullscreen">
+  <button class="fs-full-close" onclick="closeFullscreen()">✕</button>
+  <button class="fs-full-nav prev" onclick="fullscreenNav(-1)">‹</button>
+  <img class="fs-full-img" id="fsFullImg" src="" alt="Swing frame">
+  <button class="fs-full-nav next" onclick="fullscreenNav(1)">›</button>
+  <div class="fs-full-label" id="fsFullLabel"></div>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div class="page active" id="page-dashboard">
+  <div class="dash-hero">
+    <div class="dash-eyebrow">Video Swing Coach</div>
+    <h1>Your swing.<br><em>Honestly coached.</em></h1>
+    <p>Upload a video, describe your miss, get real feedback — not generic tips.</p>
+    <button class="btn-hero" onclick="showPage('analyze')">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+      Analyze My Swing
+    </button>
+  </div>
+  <div class="dash-content">
+    <div class="dash-stats">
+      <div class="stat-card"><div class="stat-num" id="statSessions">—</div><div class="stat-lbl">Sessions</div></div>
+      <div class="stat-card"><div class="stat-num" id="statAvg">—</div><div class="stat-lbl">Avg Score</div></div>
+      <div class="stat-card"><div class="stat-num" id="statBest">—</div><div class="stat-lbl">Best Score</div></div>
+      <div class="stat-card"><div class="stat-num" id="statTrend">—</div><div class="stat-lbl">Trend</div></div>
+    </div>
+    <div class="section-title">Recent Sessions</div>
+    <div class="recent-list" id="recentList"></div>
+  </div>
+</div>
+
+<!-- ══ ANALYZE ══ -->
+<div class="page" id="page-analyze">
+  <div class="analyze-wrap">
+    <div class="form-card">
+      <div class="fc-header"><div class="fc-badge">1</div><h2>Upload Your Swing Video</h2></div>
+      <div class="fc-body">
+        <!-- Mobile: two big buttons. Desktop: drag/drop zone -->
+        <div id="mobileUpload" class="mobile-upload-btns">
+          <button class="mob-upload-btn primary" onclick="document.getElementById('cameraInput').click()">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+            Record a Swing
+          </button>
+          <button class="mob-upload-btn secondary" onclick="document.getElementById('libraryInput').click()">
+            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Choose from Library
+          </button>
+          <input type="file" id="cameraInput" accept="video/*" capture="environment" style="display:none">
+          <input type="file" id="libraryInput" accept="video/*" style="display:none">
+        </div>
+        <!-- Desktop drag/drop zone -->
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="videoInput" accept="video/*">
+          <div class="uz-icon"><svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg></div>
+          <div class="uz-title">Drop your swing video here</div>
+          <div class="uz-sub">MP4, MOV, AVI — face-on or down-the-line</div>
+          <div class="file-chosen" id="fileChosen"></div>
+        </div>
+        <div class="video-preview" id="videoPreview"><video id="videoEl" controls muted playsinline></video></div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="fc-header"><div class="fc-badge">2</div><h2>Tell Us About Your Game</h2></div>
+      <div class="fc-body">
+        <div class="fields-grid">
+          <div class="fg"><label>Your Name</label><input type="text" id="golferName" placeholder="e.g. Ryan"></div>
+          <div class="fg"><label>Skill Level</label>
+            <select id="skillLevel">
+              <option value="beginner">Beginner</option>
+              <option value="intermediate" selected>Intermediate (breaking 100)</option>
+              <option value="advanced">Advanced (breaking 85)</option>
+              <option value="competitive">Competitive (scratch to +5)</option>
+            </select>
+          </div>
+          <div class="fg"><label>Club in Hand</label>
+            <select id="clubType">
+              <option value="driver">Driver</option>
+              <option value="iron" selected>Iron</option>
+              <option value="wedge">Wedge</option>
+              <option value="fairway wood">Fairway Wood / Hybrid</option>
+            </select>
+          </div>
+          <div class="fg"><label>Camera Angle</label>
+            <select id="cameraAngle">
+              <option value="face-on">Face-On (facing the golfer)</option>
+              <option value="down-the-line">Down the Line (behind golfer)</option>
+              <option value="unknown">Not Sure</option>
+            </select>
+          </div>
+          <div class="fg full">
+            <label>Your Common Miss or Ball Flight</label>
+            <textarea id="commonMiss" placeholder="Be specific — e.g. 'big slice with driver', 'chunk irons', 'everything goes left'..."></textarea>
+            <div class="hint">The more specific you are, the better the coaching.</div>
+          </div>
+          <div class="fg"><label>Frames to Analyze</label>
+            <select id="numFrames">
+              <option value="6">6 — quick</option>
+              <option value="8" selected>8 — recommended</option>
+              <option value="10">10 — detailed</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="usesBadge" class="uses-badge" style="display:none;margin-bottom:8px">2 free analyses remaining</div>
+    <button class="btn-analyze" id="submitBtn" disabled onclick="startAnalysisFlow()">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+      Analyze My Swing
+    </button>
+    <div class="err-box" id="errBox"></div>
+
+    <div class="progress-wrap" id="progressWrap">
+      <div class="spin"></div>
+      <h3 id="progTitle">Uploading…</h3>
+      <p id="progSub">Sending your swing to the server</p>
+      <div class="progress-steps">
+        <div class="ps" id="ps1">Upload</div>
+        <div class="ps" id="ps2">Extract Frames</div>
+        <div class="ps" id="ps3">Swing Analysis</div>
+        <div class="ps" id="ps4">Building Report</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HISTORY ══ -->
+<div class="page" id="page-history">
+  <div class="history-wrap">
+    <div class="section-title">All Sessions</div>
+    <div class="score-trend" id="scoreTrendWrap" style="display:none">
+      <div class="trend-chart">
+        <div class="trend-title">Score Trend</div>
+        <canvas id="trendCanvas"></canvas>
+      </div>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+</div>
+
+<!-- ══ SESSION VIEW ══ -->
+<div class="page" id="page-session">
+  <div class="session-wrap" id="sessionWrap"></div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────────
+let videoFile = null;
+let currentSessionId = null;
+let pendingEmail = '';
+let slideshowFrames = [];
+let slideshowLabels = [];
+let slideshowIndex = 0;
+
+// ── Navigation ─────────────────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn[data-page]').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  const btn = document.querySelector(`.nav-btn[data-page="${name}"]`);
+  if (btn) btn.classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'history') loadHistory();
+}
+
+// ── Upload ─────────────────────────────────────────────────────────────────────
+const uploadZone = document.getElementById('uploadZone');
+const videoInput = document.getElementById('videoInput');
+const videoEl   = document.getElementById('videoEl');
+
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+uploadZone.addEventListener('drop', e => {
+  e.preventDefault(); uploadZone.classList.remove('dragover');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('video/')) loadFile(f);
+});
+videoInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+function loadFile(file) {
+  videoFile = file;
+  videoEl.src = URL.createObjectURL(file);
+  document.getElementById('videoPreview').style.display = 'block';
+  const fc = document.getElementById('fileChosen');
+  fc.style.display = 'block';
+  fc.textContent = '✓ ' + file.name;
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('errBox').style.display = 'none';
+}
+
+// ── Email gate ─────────────────────────────────────────────────────────────────
+function startAnalysisFlow() {
+  if (!videoFile) return;
+  document.getElementById('emailModal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('modalEmail').focus(), 100);
+}
+
+async function submitEmailGate() {
+  const emailInput = document.getElementById('modalEmail');
+  const val = emailInput.value.trim();
+  if (val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+    emailInput.style.borderColor = '#e74c3c';
+    emailInput.focus();
+    return;
+  }
+  emailInput.style.borderColor = '';
+  pendingEmail = val;
+  document.getElementById('emailModal').classList.add('hidden');
+
+  // Check usage before proceeding
+  if (val) {
+    const usage = await checkUsage(val);
+    updateUsesBadge(usage.uses_remaining);
+    if (!usage.can_analyze) {
+      showPaywall(val);
+      return;
+    }
+  }
+  runAnalysis();
+}
+
+function skipEmail() {
+  pendingEmail = '';
+  document.getElementById('emailModal').classList.add('hidden');
+  // Show paywall if they've somehow hit limit without email (edge case)
+  runAnalysis();
+}
+
+// ── Analysis ───────────────────────────────────────────────────────────────────
+function setStep(n) {
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('ps' + i);
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  }
+}
+
+async function runAnalysis() {
+  if (!videoFile) return;
+  document.getElementById('errBox').style.display = 'none';
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('submitBtn').disabled = true;
+
+  setStep(1);
+  document.getElementById('progTitle').textContent = 'Uploading your swing…';
+  document.getElementById('progSub').textContent = 'Sending video to the server';
+
+  const fd = new FormData();
+  fd.append('video', videoFile);
+  fd.append('golfer_name', document.getElementById('golferName').value);
+  fd.append('skill_level', document.getElementById('skillLevel').value);
+  fd.append('club_type', document.getElementById('clubType').value);
+  fd.append('camera_angle', document.getElementById('cameraAngle').value);
+  fd.append('common_miss', document.getElementById('commonMiss').value);
+  fd.append('num_frames', document.getElementById('numFrames').value);
+  fd.append('email', pendingEmail);
+
+  try {
+    await new Promise(r => setTimeout(r, 80));
+    setStep(2);
+    document.getElementById('progTitle').textContent = 'Extracting frames…';
+    document.getElementById('progSub').textContent = 'Breaking your swing into key positions';
+
+    setTimeout(() => {
+      setStep(3);
+      document.getElementById('progTitle').textContent = 'Analyzing your swing…';
+      document.getElementById('progSub').textContent = 'Breaking down each position against proper mechanics';
+    }, 1200);
+
+    const res = await fetch('/analyze', { method: 'POST', body: fd });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({ detail: 'Server error' }));
+      if (res.status === 402 || e.detail === 'free_limit_reached') {
+        document.getElementById('progressWrap').style.display = 'none';
+        document.getElementById('submitBtn').disabled = false;
+        showPaywall(pendingEmail);
+        return;
+      }
+      throw new Error(e.detail || 'Error ' + res.status);
+    }
+
+    setStep(4);
+    document.getElementById('progTitle').textContent = 'Building your report…';
+    document.getElementById('progSub').textContent = 'Almost ready';
+    await new Promise(r => setTimeout(r, 500));
+
+    const data = await res.json();
+    currentSessionId = data.sessionId;
+    document.getElementById('progressWrap').style.display = 'none';
+    if (data.usesRemaining !== undefined) updateUsesBadge(data.usesRemaining);
+    renderSession(data.sessionId, data);
+    showPage('session');
+
+  } catch (err) {
+    document.getElementById('progressWrap').style.display = 'none';
+    const eb = document.getElementById('errBox');
+    eb.style.display = 'block';
+    eb.textContent = 'Something went wrong: ' + err.message;
+    document.getElementById('submitBtn').disabled = false;
+  }
+}
+
+// ── Score helpers ──────────────────────────────────────────────────────────────
+function scoreClass(s) {
+  if (s >= 75) return 'great';
+  if (s >= 58) return 'good';
+  if (s >= 40) return 'fair';
+  return 'poor';
+}
+function scoreColor(s) {
+  return { great:'#d4edda', good:'#fdf6de', fair:'#fff3e0', poor:'#fdecea' }[scoreClass(s)] || '#eee';
+}
+function scoreTextColor(s) {
+  return { great:'#1a5c2a', good:'#7a5a00', fair:'#8a4800', poor:'#9c1a0a' }[scoreClass(s)] || '#333';
+}
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+// ── Frame slideshow ────────────────────────────────────────────────────────────
+function buildSlideshow(frameUrls, frameLabels) {
+  slideshowFrames = frameUrls || [];
+  slideshowLabels = frameLabels || [];
+  slideshowIndex  = 0;
+  if (!slideshowFrames.length) return '';
+
+  const thumbs = slideshowFrames.map((url, i) =>
+    `<img class="fs-thumb${i===0?' active':''}" src="${url}" alt=""
+      onclick="goToFrame(${i})" title="${slideshowLabels[i]||''}">`
+  ).join('');
+
+  const dots = slideshowFrames.map((_, i) =>
+    `<button class="fs-dot${i===0?' active':''}" onclick="goToFrame(${i})"></button>`
+  ).join('');
+
+  return `<div class="frame-slideshow" id="frameSlideshow">
+    <div class="fs-header">
+      <div class="fs-title">
+        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h10a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>
+        Swing Frames
+      </div>
+      <div class="fs-counter" id="fsCounter">1 / ${slideshowFrames.length}</div>
+    </div>
+    <div class="fs-stage" onclick="openFullscreen()">
+      <img id="fsMainImg" src="${slideshowFrames[0]}" alt="Swing frame">
+      <button class="fs-nav prev" id="fsPrev" onclick="event.stopPropagation();slideNav(-1)" disabled>‹</button>
+      <button class="fs-nav next" id="fsNext" onclick="event.stopPropagation();slideNav(1)">›</button>
+    </div>
+    <div class="fs-label-band">
+      <div class="fs-phase-label" id="fsPhaseLabel">${slideshowLabels[0]||'Address'}</div>
+      <div class="fs-dots" id="fsDots">${dots}</div>
+    </div>
+    <div class="fs-thumbnails">${thumbs}</div>
+  </div>`;
+}
+
+function updateSlideshow() {
+  const total = slideshowFrames.length;
+  if (!total) return;
+  const img = document.getElementById('fsMainImg');
+  if (!img) return;
+
+  img.classList.add('fading');
+  setTimeout(() => { img.src = slideshowFrames[slideshowIndex]; img.classList.remove('fading'); }, 120);
+
+  document.getElementById('fsCounter').textContent    = `${slideshowIndex+1} / ${total}`;
+  document.getElementById('fsPhaseLabel').textContent = slideshowLabels[slideshowIndex] || `Frame ${slideshowIndex+1}`;
+  document.getElementById('fsPrev').disabled          = slideshowIndex === 0;
+  document.getElementById('fsNext').disabled          = slideshowIndex === total - 1;
+
+  document.querySelectorAll('.fs-dot').forEach((d, i)  => d.classList.toggle('active', i === slideshowIndex));
+  document.querySelectorAll('.fs-thumb').forEach((t, i) => {
+    t.classList.toggle('active', i === slideshowIndex);
+    if (i === slideshowIndex) t.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
+  });
+}
+
+function slideNav(dir) {
+  const next = slideshowIndex + dir;
+  if (next < 0 || next >= slideshowFrames.length) return;
+  slideshowIndex = next;
+  updateSlideshow();
+}
+
+function goToFrame(i) {
+  slideshowIndex = i;
+  updateSlideshow();
+}
+
+// Keyboard nav
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('fsFullscreen').classList.contains('hidden')) {
+    if (e.key === 'ArrowLeft')  fullscreenNav(-1);
+    if (e.key === 'ArrowRight') fullscreenNav(1);
+    if (e.key === 'Escape')     closeFullscreen();
+    return;
+  }
+  if (document.getElementById('page-session').classList.contains('active')) {
+    if (e.key === 'ArrowLeft')  slideNav(-1);
+    if (e.key === 'ArrowRight') slideNav(1);
+  }
+});
+
+// ── Fullscreen ─────────────────────────────────────────────────────────────────
+function openFullscreen() {
+  const fs = document.getElementById('fsFullscreen');
+  document.getElementById('fsFullImg').src    = slideshowFrames[slideshowIndex];
+  document.getElementById('fsFullLabel').textContent = slideshowLabels[slideshowIndex] || '';
+  fs.classList.remove('hidden');
+}
+function closeFullscreen() {
+  document.getElementById('fsFullscreen').classList.add('hidden');
+}
+function fullscreenNav(dir) {
+  const next = slideshowIndex + dir;
+  if (next < 0 || next >= slideshowFrames.length) return;
+  slideshowIndex = next;
+  document.getElementById('fsFullImg').src           = slideshowFrames[slideshowIndex];
+  document.getElementById('fsFullLabel').textContent = slideshowLabels[slideshowIndex] || '';
+  updateSlideshow();
+}
+document.getElementById('fsFullscreen').addEventListener('click', function(e) {
+  if (e.target === this) closeFullscreen();
+});
+
+// ── Render session ─────────────────────────────────────────────────────────────
+function renderSession(sessionId, d) {
+  const wrap  = document.getElementById('sessionWrap');
+  const r     = d.full_result || d;
+  const score = r.overallScore ?? d.overall_score;
+  const frameUrls   = r.frameUrls   || [];
+  const frameLabels = r.frameLabels || [];
+
+  let html = `<button class="session-back"
+    onclick="history.length>1?window.history.back():showPage('dashboard')">← Back</button>`;
+
+  // Frame slideshow — top of results
+  if (frameUrls.length) html += buildSlideshow(frameUrls, frameLabels);
+
+  html += `<div class="headline-band">
+    <div class="hb-quote">${r.headline || ''}</div>
+    <div class="hb-scores">
+      <div class="hbs"><span class="hbs-num">${score ?? '—'}</span><span class="hbs-lbl">Score</span></div>
+      <div class="hbs"><span class="hbs-num" style="font-size:18px;padding-top:6px">${r.overallRating||'—'}</span><span class="hbs-lbl">Rating</span></div>
+      <div class="hbs"><span class="hbs-num" style="font-size:20px;padding-top:4px">${r.handicapEstimate||'—'}</span><span class="hbs-lbl">Handicap Est.</span></div>
+      ${r.framesExtracted?`<div class="hbs"><span class="hbs-num" style="font-size:20px;padding-top:4px">${r.framesExtracted}</span><span class="hbs-lbl">Frames</span></div>`:''}
+    </div>
+  </div>`;
+
+  if (r.missExplanation) {
+    html += `<div class="miss-band" style="display:block">
+      <div class="miss-label">Why You're Missing It</div><p>${r.missExplanation}</p>
+    </div>`;
+  }
+
+  if (r.topPriority) {
+    const p = r.topPriority;
+    html += `<div class="priority-band">
+      <div class="pb-eye">🎯 #1 Priority Fix</div>
+      <div class="pb-fault">${p.fault||''}</div>
+      <div class="pb-why">${p.why||''}</div>
+      <div class="drill-box"><div class="drill-lbl">The Drill</div><p>${p.drill||''}</p></div>
+      <div class="pb-feel">${p.feelCue||''}</div>
+    </div>`;
+  }
+
+  if (r.phases && r.phases.length) {
+    const bLabel = { great:'Great', solid:'Solid', 'needs-work':'Needs Work', 'fix-first':'Fix First' };
+    html += '<div class="phases-grid">';
+    r.phases.forEach((ph, i) => {
+      html += `<div class="phase-card" style="animation-delay:${i*.05}s">
+        <div class="ph-header">
+          <div class="ph-title">${ph.emoji||''} ${ph.name||''}</div>
+          <div class="ph-badge ${ph.rating||'solid'}">${bLabel[ph.rating]||ph.rating}</div>
+        </div>
+        <div class="ph-body">
+          <div class="ph-sec">What I See</div><p>${ph.whatISee||''}</p>
+          ${ph.whyItMatters?`<div class="ph-sec">Why It Matters</div><p>${ph.whyItMatters}</p>`:''}
+          ${ph.fix?`<div class="ph-sec">The Fix</div><p>${ph.fix}</p>`:''}
+          ${ph.feelCue?`<div class="feel-cue">"${ph.feelCue}"</div>`:''}
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  if (r.strengths && r.strengths.length) {
+    html += `<div class="strengths-card"><h3>What You're Doing Well</h3>`;
+    r.strengths.forEach(s => { html += `<div class="str-item"><div class="str-dot"></div><span>${s}</span></div>`; });
+    html += '</div>';
+  }
+
+  if (r.encouragement) {
+    html += `<div class="enc-card"><p>${r.encouragement}</p></div>`;
+  }
+
+  html += `<div class="chat-section" id="chatSection">
+    <div class="chat-header">
+      <div class="chat-dot"></div>
+      <div><h3>Ask Your Coach</h3><p>Follow-up questions about your swing</p></div>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-suggestions">
+      <button class="sug-btn" onclick="sendSuggestion(this)">What does this mean?</button>
+      <button class="sug-btn" onclick="sendSuggestion(this)">Give me another drill</button>
+      <button class="sug-btn" onclick="sendSuggestion(this)">How long to fix this?</button>
+      <button class="sug-btn" onclick="sendSuggestion(this)">What should I do at the range today?</button>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chatInput" placeholder="Ask anything about your swing…"
+        onkeydown="if(event.key==='Enter')sendChat()">
+      <button class="chat-send" id="chatSend" onclick="sendChat()">Send</button>
+    </div>
+  </div>`;
+
+  wrap.innerHTML = html;
+  if (sessionId) loadChat(sessionId);
+}
+
+// ── Chat ───────────────────────────────────────────────────────────────────────
+function sendSuggestion(btn) {
+  document.getElementById('chatInput').value = btn.textContent;
+  sendChat();
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg || !currentSessionId) return;
+
+  const msgs = document.getElementById('chatMessages');
+  msgs.innerHTML += `<div class="chat-msg user">${escHtml(msg)}</div>`;
+  msgs.innerHTML += `<div class="chat-msg thinking" id="thinking">Thinking…</div>`;
+  msgs.scrollTop = msgs.scrollHeight;
+  input.value = '';
+  document.getElementById('chatSend').disabled = true;
+
+  try {
+    const res = await fetch(`/sessions/${currentSessionId}/chat`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ message: msg })
+    });
+    const data = await res.json();
+    document.getElementById('thinking')?.remove();
+    msgs.innerHTML += `<div class="chat-msg assistant">${escHtml(data.reply)}</div>`;
+    msgs.scrollTop = msgs.scrollHeight;
+  } catch (e) {
+    document.getElementById('thinking')?.remove();
+    msgs.innerHTML += `<div class="chat-msg assistant">Sorry, something went wrong. Try again.</div>`;
+  } finally {
+    document.getElementById('chatSend').disabled = false;
+  }
+}
+
+async function loadChat(sessionId) {
+  try {
+    const res = await fetch(`/sessions/${sessionId}/chat`);
+    const msgs = await res.json();
+    const el = document.getElementById('chatMessages');
+    if (!el) return;
+    msgs.forEach(m => { el.innerHTML += `<div class="chat-msg ${m.role}">${escHtml(m.content)}</div>`; });
+    el.scrollTop = el.scrollHeight;
+  } catch(e) {}
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+// ── Dashboard ──────────────────────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const sessions = await fetch('/sessions').then(r => r.json());
+    document.getElementById('statSessions').textContent = sessions.length || '0';
+
+    if (sessions.length > 0) {
+      const scores = sessions.map(s => s.overall_score).filter(s => s != null);
+      if (scores.length) {
+        const avg  = Math.round(scores.reduce((a,b) => a+b,0) / scores.length);
+        const best = Math.max(...scores);
+        document.getElementById('statAvg').textContent = avg;
+        document.getElementById('statBest').textContent = best;
+        document.getElementById('statBest').className = 'stat-num ' + scoreClass(best);
+        if (scores.length >= 2) {
+          const trend = scores[0] - scores[1];
+          const tEl = document.getElementById('statTrend');
+          tEl.textContent  = (trend>0?'↑':trend<0?'↓':'→') + Math.abs(trend);
+          tEl.className    = 'stat-num ' + (trend>0?'good':trend<0?'warn':'');
+        }
+      }
+
+      const list = document.getElementById('recentList');
+      list.innerHTML = '';
+      sessions.slice(0, 5).forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'recent-card';
+        div.onclick = () => openSession(s.id);
+        div.innerHTML = `
+          <div class="rc-score" style="background:${scoreColor(s.overall_score)};color:${scoreTextColor(s.overall_score)}">${s.overall_score??'?'}</div>
+          <div class="rc-info">
+            <div class="rc-headline">${s.headline||'Swing Analysis'}</div>
+            <div class="rc-meta">${s.golfer_name||'Golfer'} · ${s.club_type||''} · ${fmtDate(s.created_at)}</div>
+          </div>
+          <div class="rc-rating">${s.overall_rating||''}</div>`;
+        list.appendChild(div);
+      });
+    } else {
+      document.getElementById('recentList').innerHTML = `
+        <div class="empty-state"><div class="e-icon">🏌️</div>
+        <p>No sessions yet. Upload your first swing to get started.</p></div>`;
+    }
+  } catch(e) {}
+}
+
+// ── History ────────────────────────────────────────────────────────────────────
+async function loadHistory() {
+  try {
+    const sessions = await fetch('/sessions').then(r => r.json());
+    const list = document.getElementById('historyList');
+    list.innerHTML = '';
+
+    if (!sessions.length) {
+      list.innerHTML = `<div class="empty-state"><div class="e-icon">📋</div><p>No sessions yet.</p></div>`;
+      return;
+    }
+
+    const scores = sessions.slice().reverse().map(s => s.overall_score).filter(s => s != null);
+    if (scores.length > 1) {
+      document.getElementById('scoreTrendWrap').style.display = 'block';
+      drawTrend(scores);
+    }
+
+    sessions.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'hist-card';
+      div.innerHTML = `
+        <div class="hc-score" style="background:${scoreColor(s.overall_score)};color:${scoreTextColor(s.overall_score)}">${s.overall_score??'?'}</div>
+        <div class="hc-info">
+          <div class="hc-headline">${s.headline||'Swing Analysis'}</div>
+          <div class="hc-meta">${s.golfer_name||'Golfer'} · ${s.club_type||''} · ${s.camera_angle||''} · ${fmtDate(s.created_at)}</div>
+        </div>
+        <button class="hc-del" title="Delete" onclick="deleteSession(event,'${s.id}')">✕</button>`;
+      div.addEventListener('click', () => openSession(s.id));
+      list.appendChild(div);
+    });
+  } catch(e) {}
+}
+
+function drawTrend(scores) {
+  const canvas = document.getElementById('trendCanvas');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width  = rect.width * dpr;
+  canvas.height = 80 * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = 80, pad = 8;
+  const min = Math.max(0, Math.min(...scores) - 5);
+  const max = Math.min(100, Math.max(...scores) + 5);
+  const xs = scores.map((_,i) => pad + i*(W-pad*2)/(scores.length-1));
+  const ys = scores.map(s => H - pad - (s-min)/(max-min)*(H-pad*2));
+
+  ctx.beginPath(); ctx.moveTo(xs[0], ys[0]);
+  for (let i=1; i<xs.length; i++) {
+    const cpx = (xs[i-1]+xs[i])/2;
+    ctx.bezierCurveTo(cpx,ys[i-1],cpx,ys[i],xs[i],ys[i]);
+  }
+  ctx.strokeStyle='#1c3829'; ctx.lineWidth=2.5; ctx.stroke();
+
+  scores.forEach((s,i) => {
+    ctx.beginPath(); ctx.arc(xs[i],ys[i],4,0,Math.PI*2);
+    ctx.fillStyle='#3a6b50'; ctx.fill();
+    ctx.fillStyle='#1c3829'; ctx.font='bold 10px Lato,sans-serif';
+    ctx.textAlign='center'; ctx.fillText(s, xs[i], ys[i]-8);
+  });
+}
+
+async function deleteSession(e, id) {
+  e.stopPropagation();
+  if (!confirm('Delete this session?')) return;
+  await fetch('/sessions/'+id, { method:'DELETE' });
+  loadHistory(); loadDashboard();
+}
+
+async function openSession(id) {
+  try {
+    const data = await fetch('/sessions/'+id).then(r => r.json());
+    currentSessionId = id;
+    renderSession(id, data);
+    showPage('session');
+  } catch(e) {}
+}
+
+// ── Usage & Paywall ───────────────────────────────────────────────────────────
+let selectedPlan = 'monthly';
+let currentUserEmail = '';
+
+async function checkUsage(email) {
+  try {
+    const url = email ? `/usage?email=${encodeURIComponent(email)}` : '/usage';
+    const data = await fetch(url).then(r => r.json());
+    return data;
+  } catch(e) {
+    return { can_analyze: true, uses_remaining: 2, plan: 'free' };
+  }
+}
+
+function selectPlan(el, plan) {
+  selectedPlan = plan;
+  document.querySelectorAll('.pricing-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function showPaywall(email) {
+  currentUserEmail = email || '';
+  const pe = document.getElementById('paywallEmail');
+  if (email) pe.value = email;
+  else if (pendingEmail) pe.value = pendingEmail;
+  // Pre-select monthly
+  const monthly = document.querySelector('[data-plan="monthly"]');
+  if (monthly) selectPlan(monthly, 'monthly');
+  document.getElementById('paywallModal').classList.remove('hidden');
+}
+
+function hidePaywall() {
+  document.getElementById('paywallModal').classList.add('hidden');
+}
+
+async function submitWaitlist() {
+  const emailEl = document.getElementById('paywallEmail');
+  const email = emailEl.value.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    emailEl.style.borderColor = '#e74c3c';
+    emailEl.focus();
+    return;
+  }
+  emailEl.style.borderColor = '';
+
+  const btn = document.querySelector('.paywall-submit');
+  btn.textContent = 'Joining list…';
+  btn.disabled = true;
+
+  try {
+    await fetch('/waitlist', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, plan: selectedPlan })
+    });
+    btn.textContent = "You\'re on the list! We\'ll be in touch.";
+    btn.style.background = 'var(--forest)';
+    setTimeout(() => hidePaywall(), 2500);
+  } catch(e) {
+    btn.textContent = 'Join Early Access List →';
+    btn.disabled = false;
+  }
+}
+
+// Close paywall on overlay click
+document.getElementById('paywallModal').addEventListener('click', function(e) {
+  if (e.target === this) hidePaywall();
+});
+
+function updateUsesBadge(usesRemaining) {
+  const badge = document.getElementById('usesBadge');
+  if (!badge) return;
+  if (usesRemaining <= 0) {
+    badge.textContent = 'No free analyses left';
+    badge.className = 'uses-badge empty';
+  } else if (usesRemaining === 1) {
+    badge.textContent = '1 free analysis left';
+    badge.className = 'uses-badge warn';
+  } else {
+    badge.textContent = `${usesRemaining} free analyses remaining`;
+    badge.className = 'uses-badge';
+  }
+  badge.style.display = 'inline-flex';
+}
+
+// ── PWA: Service Worker ────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/static/sw.js')
+      .then(r => console.log('SW registered'))
+      .catch(e => console.log('SW failed:', e));
+  });
+}
+
+// ── PWA: Install prompt ────────────────────────────────────────────────────────
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Show banner if not dismissed before
+  if (!localStorage.getItem('installDismissed')) {
+    document.getElementById('installBanner').classList.remove('hidden');
+  }
+});
+
+function installPWA() {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(choice => {
+    deferredInstallPrompt = null;
+    document.getElementById('installBanner').classList.add('hidden');
+  });
+}
+
+function dismissInstall() {
+  document.getElementById('installBanner').classList.add('hidden');
+  localStorage.setItem('installDismissed', '1');
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').classList.add('hidden');
+});
+
+// ── Mobile file inputs ─────────────────────────────────────────────────────────
+const cameraInput  = document.getElementById('cameraInput');
+const libraryInput = document.getElementById('libraryInput');
+if (cameraInput)  cameraInput.addEventListener('change',  e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+if (libraryInput) libraryInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+// ── Swipe gestures for slideshow ───────────────────────────────────────────────
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchend', e => {
+  if (!document.getElementById('page-session').classList.contains('active')) return;
+  if (!slideshowFrames.length) return;
+
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+
+  // Only trigger on horizontal swipes (dx > dy to avoid scroll conflict)
+  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+    if (dx < 0) slideNav(1);  // swipe left = next
+    else        slideNav(-1); // swipe right = prev
+  }
+}, { passive: true });
+
+// ── Swipe for fullscreen too ───────────────────────────────────────────────────
+document.getElementById('fsFullscreen').addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+}, { passive: true });
+
+document.getElementById('fsFullscreen').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 40) {
+    if (dx < 0) fullscreenNav(1);
+    else        fullscreenNav(-1);
+  }
+}, { passive: true });
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+loadDashboard();
+</script>
+</body>
+</html>

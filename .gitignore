@@ -1,0 +1,19 @@
+# Database
+*.db
+
+# Frames (user uploads - too large for git)
+static/frames/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Environment
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
