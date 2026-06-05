@@ -98,10 +98,10 @@ def send_swing_report(to_email, result, golfer_name):
 # ── Directory setup ────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
-FRAMES_DIR = DATA_DIR / "frames"
 # On Railway, use /data for persistent storage if available, else local
 DATA_DIR = Path(os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", str(BASE_DIR)))
 DB_PATH = DATA_DIR / "swingcamiq.db"
+FRAMES_DIR = DATA_DIR / "frames"
 
 FRAMES_DIR.mkdir(parents=True, exist_ok=True)
 
