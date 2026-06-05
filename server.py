@@ -23,6 +23,78 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ── Resend email config ────────────────────────────────────────────────────────
+import resend as _resend_mod
+_resend_mod.api_key = os.environ.get("RESEND_API_KEY", "")
+FROM_EMAIL = "SwingCamIQ <coach@swingcamiq.com>"
+
+def send_swing_report(to_email, result, golfer_name):
+    if not _resend_mod.api_key or not to_email:
+        return
+    try:
+        name = golfer_name.strip() or "Golfer"
+        score = result.get("overallScore", "--")
+        rating = result.get("overallRating", "--")
+        handicap = result.get("handicapEstimate", "--")
+        headline = result.get("headline", "")
+        priority = result.get("topPriority", {})
+        fault = priority.get("fault", "")
+        drill = priority.get("drill", "")
+        feel = priority.get("feelCue", "")
+        strengths = result.get("strengths", [])
+        encouragement = result.get("encouragement", "")
+        strengths_html = "".join(f"<li>{s}</li>" for s in strengths)
+        html = f"""<html><body style="font-family:Georgia,serif;background:#f4efe4;margin:0;padding:0">
+<div style="max-width:600px;margin:0 auto;padding:32px 20px">
+<div style="text-align:center;margin-bottom:28px">
+  <span style="font-size:28px;font-weight:900;color:#1c3829">SwingCam<span style="color:#b04e28">IQ</span></span>
+  <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#9a9a8e;margin-top:4px">Video Swing Coach</div>
+</div>
+<div style="background:#1c3829;border-radius:6px;padding:28px;margin-bottom:20px">
+  <div style="font-style:italic;font-size:20px;color:#f4efe4;line-height:1.4;margin-bottom:20px">{headline}</div>
+  <table><tr>
+    <td style="background:rgba(255,255,255,.08);border-radius:4px;padding:10px 16px;text-align:center;margin-right:8px">
+      <div style="font-size:28px;font-weight:900;color:#7ec492">{score}</div>
+      <div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.4)">SCORE</div>
+    </td>
+    <td style="width:12px"></td>
+    <td style="background:rgba(255,255,255,.08);border-radius:4px;padding:10px 16px;text-align:center">
+      <div style="font-size:15px;font-weight:900;color:#7ec492;padding-top:4px">{rating}</div>
+      <div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.4)">RATING</div>
+    </td>
+    <td style="width:12px"></td>
+    <td style="background:rgba(255,255,255,.08);border-radius:4px;padding:10px 16px;text-align:center">
+      <div style="font-size:16px;font-weight:900;color:#7ec492;padding-top:4px">{handicap}</div>
+      <div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,.4)">HDCP EST.</div>
+    </td>
+  </tr></table>
+</div>
+<div style="background:#b04e28;border-radius:6px;padding:24px;margin-bottom:20px">
+  <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:6px">#1 Priority Fix</div>
+  <div style="font-size:18px;font-weight:900;color:#fff;margin-bottom:10px">{fault}</div>
+  <div style="background:rgba(0,0,0,.18);border-radius:4px;padding:12px;margin-bottom:12px">
+    <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.45);margin-bottom:6px">The Drill</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.85);line-height:1.6">{drill}</div>
+  </div>
+  <div style="font-style:italic;font-size:15px;color:rgba(255,255,255,.85);border-top:1px solid rgba(255,255,255,.15);padding-top:12px">"{feel}"</div>
+</div>
+{"<div style='background:#fff;border:1px solid #d8cebc;border-radius:6px;padding:20px;margin-bottom:20px'><div style='font-size:16px;font-weight:900;color:#1c3829;margin-bottom:12px'>What You are Doing Well</div><ul style='margin:0;padding-left:18px;color:#3d3d35;font-size:14px;line-height:1.8'>" + strengths_html + "</ul></div>" if strengths else ""}
+{"<div style='background:#fdf6de;border:1px solid #e0cc88;border-radius:6px;padding:16px 20px;margin-bottom:20px;font-style:italic;font-size:15px;color:#1a1a16;line-height:1.6'>" + encouragement + "</div>" if encouragement else ""}
+<div style="text-align:center;padding:24px 0;border-top:1px solid #d8cebc">
+  <a href="https://swingcamiq.com" style="display:inline-block;background:#1c3829;color:#f4efe4;text-decoration:none;padding:12px 28px;border-radius:4px;font-size:14px;font-weight:700">View Full Report</a>
+  <div style="margin-top:16px;font-size:11px;color:#9a9a8e">SwingCamIQ · swingcamiq.com</div>
+</div>
+</div></body></html>"""
+        _resend_mod.Emails.send({
+            "from": FROM_EMAIL,
+            "to": to_email,
+            "subject": f"Your SwingCamIQ Report - {score}/100 - {rating}",
+            "html": html,
+        })
+    except Exception as e:
+        print(f"Email send error: {e}")
+
 # ── Directory setup ────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).parent
 STATIC_DIR = BASE_DIR / "static"
@@ -513,6 +585,13 @@ I'm providing {len(frames_b64)} frames extracted at evenly-spaced intervals acro
             result["usesRemaining"] = uses_remaining(u)
         else:
             result["usesRemaining"] = FREE_LIMIT
+
+        # Send email report
+        if email_clean:
+            try:
+                send_swing_report(email_clean, result, golfer_name)
+            except Exception as e:
+                print(f"Email error: {e}")
 
         return result
 
