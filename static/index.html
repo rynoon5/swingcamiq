@@ -181,8 +181,8 @@ nav{background:var(--forest);height:60px;display:flex;align-items:center;padding
 
 
 /* ── SHARE CARD ── */
-.share-trigger{display:flex;align-items:center;gap:8px;background:none;border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;font-family:"Lato",sans-serif;font-size:13px;font-weight:700;color:var(--ink3);cursor:pointer;transition:all .15s;margin-bottom:16px;width:100%}
-.share-trigger:hover{border-color:var(--forest);color:var(--forest)}
+.share-trigger{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--sienna);border:none;border-radius:var(--radius);padding:14px 20px;font-family:"Playfair Display",serif;font-size:16px;font-weight:700;color:#fff;cursor:pointer;transition:all .2s;margin-bottom:16px;width:100%;letter-spacing:.3px}
+.share-trigger:hover{background:var(--sienna2);transform:translateY(-1px)}
 .share-trigger svg{flex-shrink:0}
 .share-card{background:var(--forest);border-radius:var(--radius);padding:24px;margin-bottom:16px;display:none}
 .share-card.open{display:block;animation:riseIn .25s ease}
@@ -742,7 +742,8 @@ async function runAnalysis() {
 
 
 // ── Share summary ──────────────────────────────────────────────────────────────
-function toggleShare(btn, data) {
+function toggleShare(btn) {
+  const data = window._shareData || {};
   const card = document.getElementById('shareCard');
   if (card.classList.contains('open')) {
     card.classList.remove('open');
@@ -930,8 +931,8 @@ function renderSession(sessionId, d) {
   // Frame slideshow — top of results
   if (frameUrls.length) html += buildSlideshow(frameUrls, frameLabels);
 
-  // Share summary trigger
-  html += `<button class="share-trigger" onclick="toggleShare(this, ${JSON.stringify({
+  // Store share data globally then render trigger
+  window._shareData = {
     score: r.overallScore ?? score,
     rating: r.overallRating,
     handicap: r.handicapEstimate,
@@ -939,9 +940,10 @@ function renderSession(sessionId, d) {
     fault: r.topPriority?.fault,
     drill: r.topPriority?.drill,
     feelCue: r.topPriority?.feelCue
-  }).replace(/`/g, '\\`')})">
-    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
-    Share your results
+  };
+  html += `<button class="share-trigger" onclick="toggleShare(this)">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+    Share Your Results
   </button>
   <div class="share-card" id="shareCard"></div>`;
 
