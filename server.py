@@ -605,13 +605,16 @@ I'm providing {len(frames_b64)} frames extracted at evenly-spaced intervals acro
 
 # ── Sessions endpoints ─────────────────────────────────────────────────────────
 @app.get("/sessions")
-def list_sessions():
+def list_sessions(email: str = ""):
     conn = get_db()
-    rows = conn.execute("""
-        SELECT id, created_at, golfer_name, club_type, camera_angle,
-               overall_score, overall_rating, headline, frame_count
-        FROM sessions ORDER BY created_at DESC
-    """).fetchall()
+    if email.strip():
+        rows = conn.execute("""
+            SELECT id, created_at, golfer_name, club_type, camera_angle,
+                   overall_score, overall_rating, headline, frame_count
+            FROM sessions WHERE email=? ORDER BY created_at DESC
+        """, (email.strip().lower(),)).fetchall()
+    else:
+        rows = []
     conn.close()
     return [dict(r) for r in rows]
 
