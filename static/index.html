@@ -179,6 +179,19 @@ nav{background:var(--forest);height:60px;display:flex;align-items:center;padding
 .enc-card{background:var(--gold-pale);border:1px solid #e0cc88;border-radius:var(--radius);padding:20px 24px;margin-bottom:20px}
 .enc-card p{font-family:'Playfair Display',serif;font-size:16px;font-style:italic;color:var(--ink);line-height:1.65}
 
+
+/* ── SHARE CARD ── */
+.share-trigger{display:flex;align-items:center;gap:8px;background:none;border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;font-family:"Lato",sans-serif;font-size:13px;font-weight:700;color:var(--ink3);cursor:pointer;transition:all .15s;margin-bottom:16px;width:100%}
+.share-trigger:hover{border-color:var(--forest);color:var(--forest)}
+.share-trigger svg{flex-shrink:0}
+.share-card{background:var(--forest);border-radius:var(--radius);padding:24px;margin-bottom:16px;display:none}
+.share-card.open{display:block;animation:riseIn .25s ease}
+.share-text{font-family:"Lato",sans-serif;font-size:14px;color:rgba(255,255,255,.85);line-height:1.7;white-space:pre-wrap;background:rgba(0,0,0,.2);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+.share-actions{display:flex;gap:8px}
+.share-btn{flex:1;padding:10px;border:none;border-radius:var(--radius);font-family:"Playfair Display",serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.share-copy{background:#7ec492;color:var(--forest)}
+.share-copy:hover{background:#6ab87e}
+.share-copied{background:rgba(255,255,255,.15);color:rgba(255,255,255,.6);cursor:default}
 /* ── FRAME SLIDESHOW ── */
 .frame-slideshow{background:var(--forest);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow-lg)}
 .fs-header{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08)}
@@ -727,6 +740,62 @@ async function runAnalysis() {
   }
 }
 
+
+// ── Share summary ──────────────────────────────────────────────────────────────
+function toggleShare(btn, data) {
+  const card = document.getElementById('shareCard');
+  if (card.classList.contains('open')) {
+    card.classList.remove('open');
+    btn.querySelector('span') && (btn.querySelector('span').textContent = 'Share your results');
+    return;
+  }
+
+  const strengths = '';
+  const text = [
+    '🏌️ My SwingCamIQ Report',
+    '',
+    `Score: ${data.score ?? '—'} | ${data.rating ?? ''} | Hdcp: ${data.handicap ?? '—'}`,
+    '',
+    `The headline: ${data.headline ?? ''}`,
+    '',
+    data.fault ? `#1 fix: ${data.fault}` : '',
+    '',
+    data.drill ? `The drill: ${data.drill}` : '',
+    '',
+    data.feelCue ? `Feel cue: "${data.feelCue}"` : '',
+    '',
+    '📲 Analyzed by SwingCamIQ',
+    'swingcamiq.com'
+  ].filter(l => l !== null).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+
+  card.innerHTML = `
+    <div class="share-text" id="shareText">${escHtml(text)}</div>
+    <div class="share-actions">
+      <button class="share-btn share-copy" id="shareCopyBtn" onclick="copyShare()">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        Copy to clipboard
+      </button>
+    </div>`;
+  card.classList.add('open');
+  card._shareText = text;
+}
+
+function copyShare() {
+  const card = document.getElementById('shareCard');
+  const text = card._shareText || '';
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('shareCopyBtn');
+    btn.className = 'share-btn share-copied';
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => {
+      btn.className = 'share-btn share-copy';
+      btn.innerHTML = '<svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy to clipboard';
+    }, 2000);
+  }).catch(() => {
+    alert('Copy failed — try long-pressing the text to copy manually.');
+  });
+}
+
 // ── Score helpers ──────────────────────────────────────────────────────────────
 function scoreClass(s) {
   if (s >= 75) return 'great';
@@ -775,7 +844,6 @@ function buildSlideshow(frameUrls, frameLabels) {
       <button class="fs-nav next" id="fsNext" onclick="event.stopPropagation();slideNav(1)">›</button>
     </div>
     <div class="fs-label-band">
-      <div class="fs-phase-label" id="fsPhaseLabel">${slideshowLabels[0]||'Address'}</div>
       <div class="fs-dots" id="fsDots">${dots}</div>
     </div>
     <div class="fs-thumbnails">${thumbs}</div>
@@ -792,7 +860,6 @@ function updateSlideshow() {
   setTimeout(() => { img.src = slideshowFrames[slideshowIndex]; img.classList.remove('fading'); }, 120);
 
   document.getElementById('fsCounter').textContent    = `${slideshowIndex+1} / ${total}`;
-  document.getElementById('fsPhaseLabel').textContent = slideshowLabels[slideshowIndex] || `Frame ${slideshowIndex+1}`;
   document.getElementById('fsPrev').disabled          = slideshowIndex === 0;
   document.getElementById('fsNext').disabled          = slideshowIndex === total - 1;
 
@@ -833,7 +900,6 @@ document.addEventListener('keydown', e => {
 function openFullscreen() {
   const fs = document.getElementById('fsFullscreen');
   document.getElementById('fsFullImg').src    = slideshowFrames[slideshowIndex];
-  document.getElementById('fsFullLabel').textContent = slideshowLabels[slideshowIndex] || '';
   fs.classList.remove('hidden');
 }
 function closeFullscreen() {
@@ -844,7 +910,6 @@ function fullscreenNav(dir) {
   if (next < 0 || next >= slideshowFrames.length) return;
   slideshowIndex = next;
   document.getElementById('fsFullImg').src           = slideshowFrames[slideshowIndex];
-  document.getElementById('fsFullLabel').textContent = slideshowLabels[slideshowIndex] || '';
   updateSlideshow();
 }
 document.getElementById('fsFullscreen').addEventListener('click', function(e) {
@@ -865,7 +930,22 @@ function renderSession(sessionId, d) {
   // Frame slideshow — top of results
   if (frameUrls.length) html += buildSlideshow(frameUrls, frameLabels);
 
-  html += `<div class="headline-band">
+  // Share summary trigger
+  html += `<button class="share-trigger" onclick="toggleShare(this, ${JSON.stringify({
+    score: r.overallScore ?? score,
+    rating: r.overallRating,
+    handicap: r.handicapEstimate,
+    headline: r.headline,
+    fault: r.topPriority?.fault,
+    drill: r.topPriority?.drill,
+    feelCue: r.topPriority?.feelCue
+  }).replace(/`/g, '\\`')})">
+    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+    Share your results
+  </button>
+  <div class="share-card" id="shareCard"></div>`;
+
+  html += \`<div class="headline-band">\`
     <div class="hb-quote">${r.headline || ''}</div>
     <div class="hb-scores">
       <div class="hbs"><span class="hbs-num">${score ?? '—'}</span><span class="hbs-lbl">Score</span></div>
