@@ -501,7 +501,7 @@ nav{background:var(--forest);height:60px;display:flex;align-items:center;padding
       <div class="fc-header"><div class="fc-badge">2</div><h2>Tell Us About Your Game</h2></div>
       <div class="fc-body">
         <div class="fields-grid">
-          <div class="fg"><label>Your Name</label><input type="text" id="golferName" placeholder="e.g. Ryan"></div>
+          <div class="fg"><label>Your Name</label><input type="text" id="golferName" placeholder="Rory"></div>
           <div class="fg"><label>Skill Level</label>
             <select id="skillLevel">
               <option value="beginner">Beginner</option>
@@ -521,14 +521,36 @@ nav{background:var(--forest);height:60px;display:flex;align-items:center;padding
           <div class="fg"><label>Camera Angle</label>
             <select id="cameraAngle">
               <option value="face-on">Face-On (facing the golfer)</option>
-              <option value="down-the-line">Down the Line (behind golfer)</option>
+              <option value="down-the-line" selected>Down the Line (behind golfer)</option>
               <option value="unknown">Not Sure</option>
             </select>
           </div>
+          <div class="fg">
+            <label>Common Miss</label>
+            <select id="commonMissSelect">
+              <option value="">Select your miss</option>
+              <option value="Slice (curves right)">Slice</option>
+              <option value="Hook (curves hard left)">Hook</option>
+              <option value="Pull (straight left)">Pull</option>
+              <option value="Push (straight right)">Push</option>
+              <option value="Thin or Fat">Thin / Fat</option>
+              <option value="All of the above — inconsistent">All Of The Above</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Goal</label>
+            <select id="goalSelect">
+              <option value="">Select a goal</option>
+              <option value="Consistency">Consistency</option>
+              <option value="Distance">Distance</option>
+              <option value="Control">Control</option>
+              <option value="Fade">Fade</option>
+              <option value="Draw">Draw</option>
+            </select>
+          </div>
           <div class="fg full">
-            <label>Your Common Miss or Ball Flight</label>
-            <textarea id="commonMiss" placeholder="Be specific — e.g. 'big slice with driver', 'chunk irons', 'everything goes left'..."></textarea>
-            <div class="hint">The more specific you are, the better the coaching.</div>
+            <label>Any other details you'd like to share?</label>
+            <textarea id="commonMiss" placeholder="e.g. I tend to struggle most under pressure, or I recently changed my grip..."></textarea>
           </div>
           <div class="fg"><label>Frames to Analyze</label>
             <select id="numFrames">
@@ -691,7 +713,14 @@ async function runAnalysis() {
   fd.append('skill_level', document.getElementById('skillLevel').value);
   fd.append('club_type', document.getElementById('clubType').value);
   fd.append('camera_angle', document.getElementById('cameraAngle').value);
-  fd.append('common_miss', document.getElementById('commonMiss').value);
+  const missSelect = document.getElementById('commonMissSelect');
+  const goalSelect = document.getElementById('goalSelect');
+  const missText = document.getElementById('commonMiss').value.trim();
+  let combinedMiss = '';
+  if (missSelect.value) combinedMiss += 'Common miss: ' + missSelect.value;
+  if (goalSelect.value) combinedMiss += (combinedMiss ? '. ' : '') + 'Goal: ' + goalSelect.value;
+  if (missText) combinedMiss += (combinedMiss ? '. ' : '') + missText;
+  fd.append('common_miss', combinedMiss);
   fd.append('num_frames', document.getElementById('numFrames').value);
   fd.append('email', pendingEmail);
 
