@@ -269,6 +269,21 @@ def admin_waitlist():
 
 
 
+
+@app.get("/admin/users")
+def admin_users():
+    conn = get_db()
+    rows = conn.execute("""
+        SELECT u.email, u.free_uses_used, u.plan, u.created_at,
+               COUNT(s.id) as session_count
+        FROM users u
+        LEFT JOIN sessions s ON s.email = u.email
+        GROUP BY u.email
+        ORDER BY u.created_at DESC
+    """).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
 # ── Prompts ────────────────────────────────────────────────────────────────────
 SYSTEM_PROMPT = """You are SwingCamIQ, a warm and knowledgeable golf instructor with 20+ years of experience coaching everyday golfers of all skill levels. You've seen every fault, every miss, every frustration — and you know how to explain fixes in plain language that actually makes sense on the range.
 
