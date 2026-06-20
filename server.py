@@ -285,6 +285,169 @@ def admin_users():
     return [dict(r) for r in rows]
 
 # ── Prompts ────────────────────────────────────────────────────────────────────
+DRILL_LIBRARY = {
+    "GRIP": {
+        "header": "GRIP / CLUBFACE CONTROL",
+        "text": """- Knuckle Check: Take your grip, look down — for a neutral grip you should see 2-2.5 knuckles on your lead hand. Too many = strong/hook-prone, too few = weak/slice-prone. Re-grip until correct, rehearse 10 reps before every range session.
+- Logo Drill: Put a glove or towel logo facing the target at address; through impact, the logo should rotate to face the ground, not still face the sky (open/cupped) or face the ground too early (closed/hooded).
+- Lead Wrist Flat Drill: Take the club to waist-height on the backswing and stop. Check your lead wrist in a mirror or on video — it should be flat, not cupped. Hold for 3 seconds, repeat 10x. (Driver/iron — full swing only; less relevant on short wedge shots where there's no waist-high backswing checkpoint.)""",
+        "always": True, "clubs": [], "miss": [],
+    },
+    "SETUP": {
+        "header": "SETUP / POSTURE",
+        "text": """- Wall Drill (Spine Angle): Stand with your butt lightly touching a wall, hinge from the hips until your hands hang naturally — that's your spine angle. Step away and recreate it at the ball.
+- Alignment Stick Across Hips: Lay a club or stick across your hip bones at address to visually confirm they're square (or intentionally open/closed) to the target line.
+- Mirror Setup Check: Set up in front of a mirror, side-on. Check: spine tilt, knee flex, weight 50/50, arms hanging (not reaching). Take a photo and compare to a tour pro's setup at the same club.""",
+        "always": True, "clubs": [], "miss": [],
+    },
+    "TAKEAWAY": {
+        "header": "TAKEAWAY",
+        "text": """- Headcover Under Lead Arm: Tuck a headcover or glove under your lead armpit and make slow takeaways without dropping it — forces the one-piece shoulders/arms/hands move.
+- Towel Across Chest: Hold a towel across your chest, hands gripping each end on top of the grip. Make a takeaway — the towel should stay flat against your chest through the first 2 feet, confirming the body and arms move together.""",
+        "always": False, "clubs": ["driver", "wood", "hybrid", "iron"], "miss": [],
+    },
+    "BACKSWING": {
+        "header": "BACKSWING / TOP OF SWING",
+        "text": """- Step-Away Drill (Weight Load): Take your normal stance, then step your trail foot back 6 inches and make backswings — exaggerates the feeling of loading into the trail side without swaying.
+- Pump Drill: Swing to the top, pump halfway down and back to the top 2-3 times, then complete the swing. Builds awareness of the top position and a controlled transition. (Driver/iron — full swing.)
+- Box Drill (Top of Backswing): Place an object (water bottle, headcover) just outside your trail foot at the top-of-backswing position. If the club consistently knocks it over, you're getting too far across/long at the top.""",
+        "always": False, "clubs": ["driver", "wood", "hybrid", "iron"], "miss": [],
+    },
+    "TRANSITION": {
+        "header": "TRANSITION / DOWNSWING (over-the-top, casting)",
+        "text": """- Step-Through Drill: As you start the downswing, let your trail foot step toward the target (like a baseball throw). Forces the lower body to lead instead of arms/shoulders spinning first. (Driver/iron/wood — full swing only.)
+- Towel Under Trail Arm: Tuck a towel under your trail armpit, make full swings without it falling before impact — keeps the trail arm connected and prevents the "throwing" motion of casting.
+- Half-Swing Step Drill: Make half-speed swings focusing only on the feeling of your hips starting the downswing 0.5 seconds before your arms — say "hips, then arms" out loud as a tempo cue.
+- Pause-at-Top Drill: Swing to the top and pause for a full second before starting down — eliminates the rushed, arms-first transition that causes casting and over-the-top moves.""",
+        "always": False, "clubs": ["driver", "wood", "hybrid", "iron"],
+        "miss": ["slice", "hook", "pull", "push", "over-the-top", "cast", "casting"],
+    },
+    "IMPACT": {
+        "header": "IMPACT (early extension, fat/thin, low point control)",
+        "text": """- Impact Bag Drill: Set an impact bag (or a pillow) where the ball would be, make slow-motion swings into it, focusing on hands ahead of the bag and a flat lead wrist at the moment of contact.
+- Towel Under Both Arms (Connection): Tuck a small towel under both armpits, make 3/4 swings without dropping it — keeps the arms connected to the body through impact, helps prevent early extension and casting.
+- Chair/Alignment Stick Behind Hips: Set a chair or stick just behind your trail hip at address. Make swings without your hips bumping into it on the way down — directly trains out early extension (standing up through the shot).
+- Step Drill for Low Point: Place a tee or coin just ahead of the ball (target-side) for irons/wedges. Try to take the tee, not the ground behind it — trains hitting the ball, then the ground, not the reverse.
+- Drop-and-Catch Tee Drill: Push a tee into the ground at the ball's location, angled toward the target. Practice swings (no ball) — you should clip the top of the tee without driving it into the ground, confirming a shallow-enough or steep-enough (club-dependent) angle of attack.""",
+        "always": True, "clubs": [], "miss": [],
+    },
+    "FOLLOWTHROUGH": {
+        "header": "FOLLOW-THROUGH / RELEASE (chicken wing, no extension)",
+        "text": """- Towel Behind Lead Elbow: Place a towel or glove in the crook of your lead elbow at setup. Swing through impact — if it falls before you reach extension, you're collapsing/chicken-winging the lead arm too early.
+- Reach for the Target Drill: After impact, consciously feel like you're reaching the clubhead down the target line as long as possible before letting the arms fold — exaggerate this 10x at half speed.""",
+        "always": False, "clubs": ["driver", "wood", "hybrid", "iron"], "miss": [],
+    },
+    "FINISH": {
+        "header": "FINISH / BALANCE",
+        "text": """- Hold the Finish Drill: After every range swing, hold your finish position for a full 3-count before relaxing. If you can't hold it, your swing is out of balance — note which way you fall (forward = good aggressive move; backward = weight stuck on trail side).
+- One Foot Up Drill: Once comfortable, try finishing with your trail foot completely off the ground, balanced only on the lead foot toe of the trail shoe — builds full weight transfer.""",
+        "always": False, "clubs": ["driver", "wood", "hybrid", "iron"], "miss": [],
+    },
+    "SLICE": {
+        "header": "SLICE (over-the-top, weak grip, open face)",
+        "text": """- Gate Drill: Set two tees just outside the toe and heel of the clubhead at address, wide enough for the club to pass through cleanly on a square path. A slice path will clip the outside tee on the way back or through.
+- Right Field Throw Feel: Rehearse the downswing feeling like you're throwing a ball to right field (for a RH golfer) — trains an in-to-out path instead of over-the-top.
+- Split Hand Drill: Grip with hands separated by 2-3 inches, make slow swings — exaggerates the feeling of the trail hand/forearm rotating through impact, which closes an open face.""",
+        "always": False, "clubs": [],
+        "miss": ["slice", "fade", "pull", "open face", "over-the-top"],
+    },
+    "HOOK": {
+        "header": "HOOK (closed face, too much in-to-out, flipping)",
+        "text": """- Step Drill with Hold: Make swings holding the finish with the clubface still visibly "looking" at the sky, not the ground — trains against over-rotating/flipping the face shut.
+- Weak Grip Checkpoint: Temporarily weaken the grip by half a knuckle and hit a few shots — if the hook disappears, grip strength was a contributing factor (not the only fix, but a fast diagnostic).""",
+        "always": False, "clubs": [],
+        "miss": ["hook", "draw", "push", "closed face"],
+    },
+    "FATTHIN": {
+        "header": "FAT / THIN CONTACT",
+        "text": """- Towel 2 Inches Behind Ball: Place a towel or line of tees 2 inches behind the ball. If you strike the towel/tees, you're hitting fat — confirms low point is too far back. (Note: for wedges, a strike just slightly behind the ball/at the ball is often correct — don't over-correct a normal descending wedge strike.)
+- Coin Under Ball Drill: Place a coin directly under the ball. Try to "pick the coin clean" without the club touching the ground before it — useful for thin-contact golfers who scoop instead of compress.""",
+        "always": False, "clubs": [],
+        "miss": ["fat", "thin", "topped", "chunk", "chunked", "scoop"],
+    },
+    "SHANK": {
+        "header": "SHANK",
+        "text": """- Toe Up Drill: Place a second ball or tee just outside the toe of the club at address. Make swings without hitting it — directly trains the arms staying connected to the body instead of pushing out toward the ball (the #1 shank cause).
+- Heel Lift Check: At setup, lift the club so only the toe touches the ground briefly, then set it back down — re-centers the connection between arms and body before swinging.""",
+        "always": False, "clubs": [], "miss": ["shank", "hosel"],
+    },
+    "TEMPO": {
+        "header": "TEMPO / TIMING",
+        "text": """- 1-2-3 Count Drill: Count "1" on the takeaway, "2" at the top, "3" through impact, out loud or in your head — smooths out a rushed, lurching tempo. (Especially useful on wedges/short shots where tempo tends to get jerky from trying to control distance.)
+- Metronome Drill: Use a metronome app (or just hum a steady beat) and match your backswing-to-downswing ratio to it — most efficient swings run close to a 3:1 backswing:downswing time ratio.""",
+        "always": True, "clubs": [], "miss": [],
+    },
+    "DRIVER": {
+        "header": "DRIVER",
+        "text": """- Tee Height Check: Tee the ball so half the ball sits above the crown of the driver at address — wrong tee height is an underrated cause of both topped and popped-up drives.
+- Upward Brush Drill: Place an alignment stick or shaft on the ground angled slightly upward toward the target, mimicking the driver's ideal upward attack angle. Practice swings brushing just under the stick.""",
+        "always": False, "clubs": ["driver"], "miss": [],
+    },
+    "WOODHYBRID": {
+        "header": "FAIRWAY WOOD / HYBRID",
+        "text": """- Tee It Slightly Drill: Practice hitting off a very low tee (ball barely above the ground) to rehearse the shallower, sweeping contact these clubs want, versus an iron's steeper dig.""",
+        "always": False, "clubs": ["wood", "hybrid"], "miss": [],
+    },
+    "IRON": {
+        "header": "IRON",
+        "text": """- Divot-After-Ball Drill: Draw a chalk line or use spray paint on the practice mat/turf at the ball position. Confirm your divot starts just in front of (target-side of) the line, not behind it.
+- Step Drill for Compression: Set up with weight slightly favoring the lead side (55-60%) before even swinging, to rehearse the forward-leaning, compressing strike irons want at impact.""",
+        "always": False, "clubs": ["iron"], "miss": [],
+    },
+    "WEDGE": {
+        "header": "WEDGE",
+        "text": """- Clock Drill: Practice swings to "9 o'clock," "10 o'clock," and "11 o'clock" backswing lengths (using the lead arm as the clock hand, ball as center) to build feel for partial-shot distance control without changing tempo.
+- Bounce Awareness Drill: Open the clubface slightly at address and feel the sole (bounce) sliding along the ground through impact rather than the leading edge digging — especially useful for golfers who chunk wedge shots.
+- Putt-Chip-Pitch Ladder: Hit the same shot with progressively more carry/roll (putter-like chip, then bump-and-run, then full pitch) to build a feel for matching technique to the actual shot needed, rather than one wedge swing for everything.""",
+        "always": False, "clubs": ["wedge"], "miss": [],
+    },
+    "PUTTING": {
+        "header": "PUTTING STROKE",
+        "text": """- Gate Drill (Putting): Set two tees just wider than the putter head, a few inches in front of the ball. Putt through the gate without clipping either tee — trains a square, on-path stroke.
+- Clock Putting Drill: Place balls at 2, 3, and 4 feet around the hole at "clock" positions and putt each in succession — builds short-putt confidence and reveals any directional bias (e.g., consistently missing left = face issue).
+- Coin/Line Alignment Drill: Use the printed line on the ball (or a Sharpie line) and aim it directly at the target on every putt to confirm setup alignment before stroke mechanics even matter.
+- Pendulum Drill: Putt with eyes closed, focusing only on feeling an even-tempo, equal-length backstroke and through-stroke — fixes a common fault of decelerating into the ball.""",
+        "always": False, "clubs": ["putter"],
+        "miss": ["putt", "putting", "three-putt", "missed putt"],
+    },
+    "CHIPPING": {
+        "header": "CHIPPING / PITCHING",
+        "text": """- Landing Spot Drill: Pick a specific landing spot (not the hole) for each chip and focus entirely on carrying the ball to that spot, letting it roll out — fixes golfers who only think about the hole and misjudge carry distance.
+- Leading Edge Low-Point Drill: Make practice chip swings brushing the grass at the same low point repeatedly before hitting a ball — chipping inconsistency is most often an inconsistent low point, not a technique flaw.
+- One-Hop Drill: From just off the green, practice landing the ball so it takes exactly one hop before releasing toward the hole — builds touch and trajectory control together.""",
+        "always": False, "clubs": [],
+        "miss": ["chip", "chipping", "pitch", "pitching", "chunk", "chili dip"],
+    },
+    "BUNKER": {
+        "header": "BUNKER PLAY",
+        "text": """- Line in the Sand Drill: Draw a line in the sand and practice hitting the line (not a ball) consistently, entering the sand 1-2 inches behind where the line is — builds the shallow, sand-displacing strike a good bunker shot needs.
+- Open Face, Swing Hard Drill: Many bunker misses come from an unconsciously square/closed face and a tentative swing. Deliberately open the face more than feels natural and commit to a full swing — counterintuitively, this is often the fix for chunked or thin bunker shots.""",
+        "always": False, "clubs": [], "miss": ["bunker", "sand", "trap"],
+    },
+}
+
+
+def build_drill_library_text(club_type: str, common_miss: str) -> str:
+    """
+    Selects only the drill categories relevant to this analysis and returns
+    them as prompt-ready text, instead of sending all 52 drills every time.
+    """
+    club_lower = (club_type or "").strip().lower()
+    miss_lower = (common_miss or "").strip().lower()
+
+    blocks = []
+    for entry in DRILL_LIBRARY.values():
+        include = entry["always"]
+        if not include and entry["clubs"]:
+            include = any(tag in club_lower for tag in entry["clubs"])
+        if not include and entry["miss"]:
+            include = any(tag in miss_lower for tag in entry["miss"])
+        if include:
+            blocks.append(f"{entry['header']}\n{entry['text']}")
+
+    return "\n\n".join(blocks)
+
+
 SYSTEM_PROMPT = """You are SwingCamIQ, a warm and knowledgeable golf instructor with 20+ years of experience coaching everyday golfers of all skill levels. You've seen every fault, every miss, every frustration — and you know how to explain fixes in plain language that actually makes sense on the range.
 
 Your job is to analyze golf swing images and give feedback that is:
@@ -293,6 +456,56 @@ Your job is to analyze golf swing images and give feedback that is:
 - SPECIFIC — tell them exactly what you see, not vague platitudes
 - ACTIONABLE — every fault gets a feel cue AND a drill they can do today
 - PRIORITIZED — focus on the 1-2 things that will make the biggest difference, not 10 things at once
+- CALIBRATED — adjust both your grading standard and your focus based on the golfer's club and skill level (see below). The same visual flaw means something different on a driver than a wedge, and for a beginner than a scratch player.
+
+READING THE FRAMES — IMPORTANT:
+You are given a chronological sequence of frames spanning address to finish, evenly spaced in TIME (not in swing phase). They are NOT pre-labeled with phase names. Do not assume frame position tells you the phase — a golfer with a slow backswing and fast downswing will have "the top" appear in a different frame than one with even tempo, and this ratio itself varies by club (wedge swings often have more even tempo; driver swings often have a longer backswing-to-downswing ratio). Look at each frame and determine for yourself what position the golfer is actually in — club position, body rotation, weight distribution — rather than trusting where it falls in the sequence. Identify and name the phases based on what you observe.
+
+CLUB-SPECIFIC CALIBRATION:
+The golfer will tell you which club they hit. Correct technique differs meaningfully by club — do not grade a driver swing and a wedge swing against the same checklist. Use this as your baseline, then adjust for what's actually being asked of that club:
+
+DRIVER:
+- Ball position forward (off lead heel), wider stance, shallower attack angle — hitting UP on the ball or level is good, not a fault
+- Longer, fuller backswing is expected and rewarded — more shoulder turn, more weight load
+- Higher hand position and more "extension" through impact; finish is tall and full
+- Slight upward angle of attack is a strength here, not a fat-shot warning sign — do not penalize it the way you would with an iron
+
+FAIRWAY WOOD / HYBRID:
+- Similar principles to driver but slightly more forward ball-strike feel — ball position just forward of center, attack angle closer to neutral/level
+- Still rewards a fuller turn, but less tolerance for an overly steep, iron-like descending blow
+
+IRON:
+- Ball position center to slightly forward depending on iron length
+- Neutral to slightly descending attack angle is correct — a divot AFTER the ball is good, not a fault
+- Forward shaft lean at impact is important and should be checked for
+- Standard full-swing mechanics checklist (turn, lag, lower-body lead) applies most directly here
+
+WEDGE:
+- Shorter, more compact swing is often correct, NOT a flaw — don't penalize a shorter backswing on a wedge shot the way you would on a driver
+- More descending, steeper attack angle is correct and desired — a deeper divot is normal and good here, not "casting" or "hitting fat"
+- Often less full hip/shoulder turn than a full swing — that's appropriate for the shorter shot, not "restricted rotation"
+- Weight distribution may stay more centered/lead-side biased throughout, rather than the big weight shift you'd want on a driver
+- Tempo is often smoother and more even than a full swing — don't expect or require a long, loaded backswing
+
+When you call out a fault, make sure it is actually a fault for THIS club, not just a deviation from full-swing-driver mechanics.
+
+SKILL-LEVEL CALIBRATION:
+The golfer will tell you their self-reported skill level: beginner, intermediate, or advanced. Use this to set your grading curve, what you prioritize, and your tone — NOT to change what you actually see in the frames.
+
+BEGINNER:
+- Grade on a curve. A beginner doing the fundamentals reasonably (balance, getting the club back and through, making contact) deserves a solid-feeling score even if technique isn't textbook — overallScore and overallRating should reflect realistic progress for someone new to the game, not be measured against a scratch-golfer standard.
+- Focus almost entirely on ONE foundational issue that will unlock the most improvement — grip, setup, balance, or a single big swing fault. Ignore minor technical nuances (wrist angles, subtle face control, swing plane details) entirely; they will be noise at this stage.
+- Tone should be especially encouraging. Assume they are easily discouraged by a wall of criticism — find genuine strengths to highlight.
+
+INTERMEDIATE:
+- Grade against a realistic "good club golfer" standard, not tour mechanics. Solid fundamentals with occasional breakdowns under speed or pressure is expected.
+- Focus on 1-2 specific, fixable faults — can include some technical detail (e.g. early extension, casting) but always tied to a clear feel cue and drill.
+- Tone: honest and direct, encouraging but treat them as someone who can handle real feedback and wants to actually improve, not just feel good.
+
+ADVANCED:
+- Grade against a tight, high standard — small deviations matter at this level and should be named precisely.
+- Focus can include finer technical detail: face control through impact, lag retention, sequencing timing, consistency of low point. Don't hold back on nuance.
+- Tone: direct and technical, golfer-to-golfer. Less hand-holding, more precision. Still find genuine strengths, but don't pad the praise.
 
 BALL FLIGHT LAWS (use these to connect miss patterns to swing causes):
 - SLICE (curves right for RH golfer): open clubface relative to swing path. Caused by: over-the-top path, weak grip, cupped lead wrist, casting.
@@ -301,67 +514,68 @@ BALL FLIGHT LAWS (use these to connect miss patterns to swing causes):
 - PUSH (goes straight right): face square but path is in-to-out too much.
 - FADE (gentle left-to-right): slightly open face to path — can be intentional.
 - DRAW (gentle right-to-left): slightly closed face to path — often a power shape.
-- FAT (hits ground before ball): weight hanging back, ball too far forward, early extension, scooping.
+- FAT (hits ground before ball): weight hanging back, ball too far forward, early extension, scooping. NOTE: a deeper, more deliberate strike before the ball is NORMAL and correct on a wedge — only call this a fault if it's clearly excessive or the golfer reported it as their miss.
 - THIN (hits top of ball): standing up through impact, head lifting, trying to "help" ball airborne.
 - TOPPED: extreme version of thin — head lifting, spine extending upward.
 - SHANK (hosel strike): arms too far from body at impact, early extension pushing hands toward ball.
 
-SWING PHASES — what to look for:
+SWING PHASES — what to look for (adjust expectations per the CLUB-SPECIFIC CALIBRATION above):
 
 ADDRESS/SETUP:
-✓ Feet shoulder-width apart
-✓ Spine tilted 20-30° from waist (athletic posture, not hunched or too upright)
-✓ Knees slightly flexed (not squatting)
-✓ Weight 50/50, ball position varies by club
-✓ Arms hanging naturally, not reaching or cramped
-✓ Club face square to target
+✔ Feet shoulder-width apart (wider for driver, narrower for wedge)
+✔ Spine tilted 20-30° from waist (athletic posture, not hunched or too upright)
+✔ Knees slightly flexed (not squatting)
+✔ Weight 50/50, ball position varies by club (see calibration above)
+✔ Arms hanging naturally, not reaching or cramped
+✔ Club face square to target
 
 TAKEAWAY (club to waist):
-✓ One-piece move: shoulders, arms, hands move together
-✓ Club face angle mirrors spine angle at waist height (toe pointing up)
-✓ No rolling/fanning the face open
-✓ No picking the club up steeply with hands
+✔ One-piece move: shoulders, arms, hands move together
+✔ Club face angle mirrors spine angle at waist height (toe pointing up)
+✔ No rolling/fanning the face open
+✔ No picking the club up steeply with hands
 
 BACKSWING:
-✓ Shoulder turn 80-100° for men
-✓ Hip turn ~45° (creating "X-factor" coil)
-✓ Lead arm relatively straight (not rigid)
-✓ Weight loading to trail foot (60-70% at top)
-✓ Spine angle maintained — no sway (lateral slide) or dip
+✔ Shoulder turn 80-100° for men on a full swing (less on a wedge — see calibration)
+✔ Hip turn ~45° (creating "X-factor" coil) on a full swing
+✔ Lead arm relatively straight (not rigid)
+✔ Weight loading to trail foot (60-70% at top on a full swing; less on a wedge)
+✔ Spine angle maintained — no sway (lateral slide) or dip
 
-TOP OF BACKSWING:
-✓ Club shaft roughly parallel to ground (slightly short is fine)
-✓ Lead wrist flat or bowed — NOT cupped (cupped = open face = slice)
-✓ Club face parallel to lead forearm
-✓ Fully coiled, tension between hips and shoulders
+TOP OF BACKSWING (full swings — may be abbreviated or absent on short wedge shots):
+✔ Club shaft roughly parallel to ground (slightly short is fine; expect shorter on wedge)
+✔ Lead wrist flat or bowed — NOT cupped (cupped = open face = slice)
+✔ Club face parallel to lead forearm
+✔ Fully coiled (full swing) — tension between hips and shoulders
 
 TRANSITION/DOWNSWING:
-✓ Lower body leads FIRST — hips bump toward target then rotate
-✓ Lag maintained — club drops behind trail shoulder into "the slot"
-✓ Arms "fall" from the inside, not thrown from the top
-✗ CASTING = releasing lag from the top, like throwing the club — kills distance, causes fat/thin
-✗ OVER-THE-TOP = arms/shoulders dominate transition, club comes over the plane — causes pull/slice
+✔ Lower body leads FIRST — hips bump toward target then rotate
+✔ Lag maintained — club drops behind trail shoulder into "the slot"
+✔ Arms "fall" from the inside, not thrown from the top
+✖ CASTING = releasing lag from the top, like throwing the club — kills distance, causes fat/thin
+✖ OVER-THE-TOP = arms/shoulders dominate transition, club comes over the plane — causes pull/slice
 
 IMPACT:
-✓ Hands ahead of clubhead (forward shaft lean) — critical for irons
-✓ Lead wrist flat/bowed, trail wrist bent back
-✓ Hips open 30-45° to target
-✓ 65-75% weight on lead foot
-✓ Head behind ball
-✓ Spine angle maintained — no "standing up" or "early extension"
-✓ Eyes on ball
+✔ Hands ahead of clubhead (forward shaft lean) — critical for irons and wedges, expected on driver too but less pronounced
+✔ Lead wrist flat/bowed, trail wrist bent back
+✔ Hips open 30-45° to target (full swing)
+✔ 65-75% weight on lead foot (full swing; wedges may stay more centered)
+✔ Head behind ball
+✔ Spine angle maintained — no "standing up" or "early extension"
+✔ Eyes on ball
+✔ Attack angle should match the club — see CLUB-SPECIFIC CALIBRATION (descending for irons/wedges, neutral-to-ascending for driver)
 
 FOLLOW-THROUGH:
-✓ Full arm extension through the ball — no chicken wing (lead elbow flying out)
-✓ Forearms rotate naturally (release)
-✓ Club continues on inside path after impact
+✔ Full arm extension through the ball — no chicken wing (lead elbow flying out)
+✔ Forearms rotate naturally (release)
+✔ Club continues on inside path after impact
 
 FINISH:
-✓ 90-95% weight on lead foot
-✓ Trail foot up on toe
-✓ Chest facing target (or just past)
-✓ Hands high — club behind head or neck
-✓ Balanced and held — not falling, not collapsing
+✔ 90-95% weight on lead foot (full swing — wedge finishes may be shorter/more controlled)
+✔ Trail foot up on toe (full swing)
+✔ Chest facing target (or just past)
+✔ Hands high — club behind head or neck (full swing; shorter on partial wedge shots)
+✔ Balanced and held — not falling, not collapsing
 
 FEEL CUES LIBRARY (use these, they work):
 - "Feel like you're swinging to right field" (for over-the-top/slicers)
@@ -376,14 +590,14 @@ FEEL CUES LIBRARY (use these, they work):
 
 RESPONSE FORMAT — return only valid JSON, no markdown, no preamble:
 {
-  "overallScore": number (0-100, be realistic — 60 is a decent club golfer),
+  "overallScore": number (0-100, curved to the golfer's self-reported skill level — a beginner doing the fundamentals reasonably should score in a solid range for a beginner, not be judged against a scratch-golfer standard. An advanced player should be held to a tighter, higher bar.),
   "overallRating": "Tour Ready" | "Solid Amateur" | "Good Club Golfer" | "Developing" | "Beginner",
-  "handicapEstimate": string (e.g. "5-12" or "18-25" or "30+"),
+  "handicapEstimate": string (e.g. "5-12" or "18-25" or "30+" — your honest estimate of their handicap based on what you see, independent of the curved score),
   "headline": string (one punchy sentence summarizing the swing — what stands out most),
   "missExplanation": string (plain-language explanation of HOW the reported miss connects to what you see in the swing — 2-3 sentences, conversational tone),
   "phases": [
     {
-      "name": string,
+      "name": string (name the phase based on what you actually observe in this frame, not a fixed position-based label),
       "emoji": string (one relevant emoji),
       "rating": "great" | "solid" | "needs-work" | "fix-first",
       "whatISee": string (plain language, 1-2 sentences, what's literally happening),
@@ -393,7 +607,7 @@ RESPONSE FORMAT — return only valid JSON, no markdown, no preamble:
     }
   ],
   "topPriority": {
-    "fault": string (the single most important thing to fix),
+    "fault": string (the single most important thing to fix, prioritized per the SKILL-LEVEL CALIBRATION above),
     "why": string (why this one first — 1-2 sentences),
     "drill": string (specific drill with exact steps — be concrete, not vague),
     "feelCue": string (the one thing to feel)
@@ -514,20 +728,23 @@ Camera angle: {camera_angle}
 Club type: {club_type}
 Self-reported skill level: {skill_level}{miss_context}
 
-I'm providing {len(frames_b64)} frames extracted at evenly-spaced intervals across the swing (chronological order). Phase labels are approximate. Analyze everything you can see and return the JSON analysis."""
+I'm providing {len(frames_b64)} frames extracted at evenly-spaced TIME intervals across the swing (chronological order, address to finish). These are NOT labeled by swing phase — figure out what phase each frame shows from what you actually see (club position, body rotation, weight distribution), not from its position in the sequence. Tempo varies by golfer and by club, so don't assume frame N is always "the top" or "impact."
+
+Relevant drills for this club and miss pattern (use these — don't invent different ones unless none of these fit):
+{build_drill_library_text(club_type, common_miss)}
+
+Analyze everything you can see and return the JSON analysis."""
             }
         ]
 
-        phase_labels = ["Address", "Takeaway", "Halfway Back", "Top", "Transition", "Halfway Down", "Impact", "Follow-Through", "Finish", "Finish+"]
         for i, frame_b64 in enumerate(frames_b64):
-            label = phase_labels[min(i, len(phase_labels) - 1)]
             content_blocks.append({
                 "type": "image",
                 "source": {"type": "base64", "media_type": "image/jpeg", "data": frame_b64}
             })
             content_blocks.append({
                 "type": "text",
-                "text": f"[Frame {i+1}/{len(frames_b64)} — {label}]"
+                "text": f"[Frame {i+1}/{len(frames_b64)}]"
             })
 
         client = anthropic.Anthropic(api_key=api_key)
@@ -549,9 +766,7 @@ I'm providing {len(frames_b64)} frames extracted at evenly-spaced intervals acro
         result["sessionId"] = session_id
 
         # Build phase labels mapping
-        phase_labels_map = []
-        for i in range(len(frame_urls)):
-            phase_labels_map.append(phase_labels[min(i, len(phase_labels) - 1)])
+        phase_labels_map = [f"Frame {i+1}" for i in range(len(frame_urls))]
         result["frameLabels"] = phase_labels_map
 
         # Persist session to DB
