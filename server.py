@@ -434,14 +434,32 @@ def build_drill_library_text(club_type: str, common_miss: str) -> str:
     """
     club_lower = (club_type or "").strip().lower()
     miss_lower = (common_miss or "").strip().lower()
+    is_putter = club_lower == "putter"
+
+    # GRIP and IMPACT drills assume a full swing (knuckle checks on a full
+    # grip, impact bags, etc.) and don't apply to a putting stroke. SETUP
+    # and TEMPO generalize reasonably and stay "always" even for putter.
+    ALWAYS_EXCEPT_PUTTER = {"GRIP", "IMPACT"}
+
+    # These categories are full-swing-only by definition, but their miss-tag
+    # keywords (pull, push, fat, hook...) can ambiguously also describe a
+    # missed putt ("I keep pulling putts left"). Never fire these for a
+    # putter analysis regardless of miss-text match — PUTTING covers the
+    # putting-specific version of these same directional misses instead.
+    MISS_TRIGGERED_FULL_SWING_ONLY = {"TRANSITION", "SLICE", "HOOK", "FATTHIN", "SHANK"}
 
     blocks = []
-    for entry in DRILL_LIBRARY.values():
-        include = entry["always"]
-        if not include and entry["clubs"]:
-            include = any(tag in club_lower for tag in entry["clubs"])
-        if not include and entry["miss"]:
-            include = any(tag in miss_lower for tag in entry["miss"])
+    for key, entry in DRILL_LIBRARY.items():
+        if is_putter and key in MISS_TRIGGERED_FULL_SWING_ONLY:
+            include = False
+        elif entry["always"]:
+            include = not (is_putter and key in ALWAYS_EXCEPT_PUTTER)
+        else:
+            include = False
+            if entry["clubs"]:
+                include = any(tag in club_lower for tag in entry["clubs"])
+            if not include and entry["miss"]:
+                include = any(tag in miss_lower for tag in entry["miss"])
         if include:
             blocks.append(f"{entry['header']}\n{entry['text']}")
 
@@ -486,6 +504,13 @@ WEDGE:
 - Often less full hip/shoulder turn than a full swing — that's appropriate for the shorter shot, not "restricted rotation"
 - Weight distribution may stay more centered/lead-side biased throughout, rather than the big weight shift you'd want on a driver
 - Tempo is often smoother and more even than a full swing — don't expect or require a long, loaded backswing
+
+PUTTER:
+- This is a completely different motion from a full swing. Do NOT apply the SWING PHASES checklist below — use the PUTTING STROKE checklist instead.
+- There is no backswing/downswing in the full-swing sense, no weight transfer, no hip or shoulder turn driving the motion, and no "top of backswing." The stroke is a short pendulum motion from the shoulders and arms.
+- The lower body and head should stay essentially still throughout — stillness is a strength here, not "restricted rotation" or a fault.
+- Tempo should be smooth and symmetrical: the backstroke and through-stroke should take roughly the same amount of time, with no jab, hit, or deceleration into the ball.
+- handicapEstimate is not meaningfully derivable from a putting stroke alone — give a loose/general estimate if you must, or note that it can't be determined from putting alone.
 
 When you call out a fault, make sure it is actually a fault for THIS club, not just a deviation from full-swing-driver mechanics.
 
@@ -577,6 +602,31 @@ FINISH:
 ✔ Hands high — club behind head or neck (full swing; shorter on partial wedge shots)
 ✔ Balanced and held — not falling, not collapsing
 
+PUTTING STROKE — use THIS checklist instead of SWING PHASES above when club is putter:
+
+SETUP:
+✔ Eyes directly over or just inside the ball
+✔ Shoulders square to the target line, putter face square at address
+✔ Arms hang relaxed, forming a soft triangle with the shoulders
+✔ Weight even, body still — no excess tension
+
+BACKSTROKE:
+✔ Motion comes from the shoulders/arms as a single pendulum unit — NOT wrists flicking independently
+✔ Putter stays low to the ground, no steep pick-up
+✔ Length is proportional to the putt distance, not a fixed length regardless of putt
+✔ Lower body and head stay still — no sway or shift
+
+IMPACT (putting):
+✔ Putter face square to the target line at contact
+✔ Slight forward press or neutral — no scooping or flipping the wrists through impact
+✔ Steady head and eyes — no looking up early to see the result
+✔ Smooth acceleration through the ball, not a jab or deceleration
+
+FOLLOW-THROUGH (putting):
+✔ Follow-through roughly mirrors the backstroke length — symmetrical pendulum, not a short hit with a long finish or vice versa
+✔ Putter face stays square through the stroke, not rotating open or closed
+✔ Body stays still until well after contact
+
 FEEL CUES LIBRARY (use these, they work):
 - "Feel like you're swinging to right field" (for over-the-top/slicers)
 - "Bump your lead hip toward the target before you turn" (transition)
@@ -587,6 +637,8 @@ FEEL CUES LIBRARY (use these, they work):
 - "Feel like your lead elbow is pointing at the ground through impact"
 - "Imagine pushing the butt of the club toward the ball as long as possible"
 - "Squeeze the ground with your trail foot on the backswing"
+- "Let the putter swing like a pendulum — same length back as through" (putting tempo)
+- "Rock your shoulders, keep everything else quiet" (putting stillness)
 
 RESPONSE FORMAT — return only valid JSON, no markdown, no preamble:
 {
