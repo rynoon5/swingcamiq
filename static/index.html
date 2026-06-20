@@ -125,8 +125,10 @@ nav{background:var(--forest);height:60px;display:flex;align-items:center;padding
 
 /* ── PROGRESS ── */
 .progress-wrap{background:var(--forest);border-radius:var(--radius);padding:28px;text-align:center;margin-bottom:20px;display:none}
-.spin{width:48px;height:48px;border:3px solid rgba(126,196,146,.3);border-top-color:#7ec492;border-radius:50%;margin:0 auto 16px;animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+.progress-bar-track{width:100%;max-width:280px;height:6px;background:rgba(255,255,255,.12);border-radius:10px;margin:0 auto 16px;overflow:hidden}
+.progress-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,#7ec492,#a8d9b5);border-radius:10px;transition:width .4s ease}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(126,196,146,.5)}50%{box-shadow:0 0 8px 1px rgba(126,196,146,.5)}}
+.progress-bar-fill.active{animation:pulseGlow 1.6s ease-in-out infinite}
 .progress-wrap h3{font-family:'Playfair Display',serif;font-size:20px;color:var(--cream);margin-bottom:6px}
 .progress-wrap p{font-size:13px;color:#a8c4b0;font-style:italic}
 .progress-steps{display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap}
@@ -572,7 +574,7 @@ nav{background:var(--forest);height:60px;display:flex;align-items:center;padding
     <div class="err-box" id="errBox"></div>
 
     <div class="progress-wrap" id="progressWrap">
-      <div class="spin"></div>
+      <div class="progress-bar-track"><div class="progress-bar-fill" id="progBarFill"></div></div>
       <h3 id="progTitle">Uploading…</h3>
       <p id="progSub">Sending your swing to the server</p>
       <div class="progress-steps">
@@ -689,6 +691,60 @@ function skipEmail() {
 }
 
 // ── Analysis ───────────────────────────────────────────────────────────────────
+let progressBarInterval = null;
+let analyzingSubtextInterval = null;
+
+const ANALYZING_SUBTEXTS = [
+  "Checking your grip and setup…",
+  "Reading your tempo and sequencing…",
+  "Comparing each position to proper mechanics…",
+  "Connecting your miss to what we see…",
+  "Picking out your top priority fix…"
+];
+
+function setProgressBar(percent) {
+  const el = document.getElementById('progBarFill');
+  if (el) el.style.width = percent + '%';
+}
+
+function clearProgressTimers() {
+  if (progressBarInterval) { clearInterval(progressBarInterval); progressBarInterval = null; }
+  if (analyzingSubtextInterval) { clearInterval(analyzingSubtextInterval); analyzingSubtextInterval = null; }
+  const fillEl = document.getElementById('progBarFill');
+  if (fillEl) fillEl.classList.remove('active');
+}
+
+// Smoothly animates the bar from startPct toward capPct over durationMs,
+// then holds steady at capPct if the real request takes longer than
+// expected — avoids the broken feeling of a bar hitting 100% and stalling.
+function animateProgressTo(startPct, capPct, durationMs) {
+  clearProgressTimers();
+  const fillEl = document.getElementById('progBarFill');
+  if (fillEl) fillEl.classList.add('active');
+  const stepMs = 200;
+  const steps = durationMs / stepMs;
+  const increment = (capPct - startPct) / steps;
+  let current = startPct;
+  setProgressBar(current);
+  progressBarInterval = setInterval(() => {
+    current = Math.min(current + increment, capPct);
+    setProgressBar(current);
+    if (current >= capPct) {
+      clearInterval(progressBarInterval);
+      progressBarInterval = null;
+    }
+  }, stepMs);
+}
+
+function startAnalyzingSubtextRotation() {
+  let idx = 0;
+  document.getElementById('progSub').textContent = ANALYZING_SUBTEXTS[0];
+  analyzingSubtextInterval = setInterval(() => {
+    idx = (idx + 1) % ANALYZING_SUBTEXTS.length;
+    document.getElementById('progSub').textContent = ANALYZING_SUBTEXTS[idx];
+  }, 3000);
+}
+
 function setStep(n) {
   for (let i = 1; i <= 4; i++) {
     const el = document.getElementById('ps' + i);
@@ -705,6 +761,7 @@ async function runAnalysis() {
   document.getElementById('submitBtn').disabled = true;
 
   setStep(1);
+  setProgressBar(8);
   document.getElementById('progTitle').textContent = 'Uploading your swing…';
   document.getElementById('progSub').textContent = 'Sending video to the server';
 
@@ -728,19 +785,22 @@ async function runAnalysis() {
   try {
     await new Promise(r => setTimeout(r, 80));
     setStep(2);
+    setProgressBar(15);
     document.getElementById('progTitle').textContent = 'Extracting frames…';
     document.getElementById('progSub').textContent = 'Breaking your swing into key positions';
 
     setTimeout(() => {
       setStep(3);
       document.getElementById('progTitle').textContent = 'Analyzing your swing…';
-      document.getElementById('progSub').textContent = 'Breaking down each position against proper mechanics';
+      startAnalyzingSubtextRotation();
+      animateProgressTo(15, 92, 18000);
     }, 1200);
 
     const res = await fetch('/analyze', { method: 'POST', body: fd });
     if (!res.ok) {
       const e = await res.json().catch(() => ({ detail: 'Server error' }));
       if (res.status === 402 || e.detail === 'free_limit_reached') {
+        clearProgressTimers();
         document.getElementById('progressWrap').style.display = 'none';
         document.getElementById('submitBtn').disabled = false;
         showPaywall(pendingEmail);
@@ -749,7 +809,9 @@ async function runAnalysis() {
       throw new Error(e.detail || 'Error ' + res.status);
     }
 
+    clearProgressTimers();
     setStep(4);
+    setProgressBar(100);
     document.getElementById('progTitle').textContent = 'Building your report…';
     document.getElementById('progSub').textContent = 'Almost ready';
     await new Promise(r => setTimeout(r, 500));
@@ -762,6 +824,7 @@ async function runAnalysis() {
     showPage('session');
 
   } catch (err) {
+    clearProgressTimers();
     document.getElementById('progressWrap').style.display = 'none';
     const eb = document.getElementById('errBox');
     eb.style.display = 'block';
