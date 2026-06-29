@@ -729,6 +729,19 @@ def extract_frames_ffmpeg(video_path: str, num_frames: int, session_id: str) -> 
 
 
 # ── Analyze endpoint ───────────────────────────────────────────────────────────
+@app.get("/admin/sessions-raw")
+def admin_sessions_raw(limit: int = 20):
+    conn = get_db()
+    rows = conn.execute("""
+        SELECT id, created_at, email, golfer_name, overall_score
+        FROM sessions
+        ORDER BY created_at DESC
+        LIMIT ?
+    """, (limit,)).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
 @app.post("/analyze")
 async def analyze_swing(
     video: UploadFile = File(...),
