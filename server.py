@@ -86,11 +86,43 @@ def send_swing_report(to_email, result, golfer_name):
   <div style="margin-top:16px;font-size:11px;color:#9a9a8e">SwingCamIQ · swingcamiq.com</div>
 </div>
 </div></body></html>"""
+        strengths_text = "\n".join(f"- {s}" for s in strengths)
+        text = f"""SwingCamIQ Report for {name}
+{'='*40}
+
+SCORE: {score}/100 — {rating}
+HANDICAP ESTIMATE: {handicap}
+
+{headline}
+
+WHY YOU'RE MISSING IT
+{result.get('missExplanation', '')}
+
+#1 PRIORITY FIX: {fault}
+{priority.get('why', '')}
+
+THE DRILL
+{drill}
+
+FEEL CUE
+{feel}
+
+WHAT YOU'RE DOING WELL
+{strengths_text}
+
+{encouragement}
+
+View your full report: https://swingcamiq.com
+
+SwingCamIQ · swingcamiq.com
+If this landed in spam, please mark it as Not Spam — it helps future reports reach you.
+"""
         _resend_mod.Emails.send({
             "from": FROM_EMAIL,
             "to": to_email,
             "subject": f"Your SwingCamIQ Report - {score}/100 - {rating}",
             "html": html,
+            "text": text,
         })
     except Exception as e:
         print(f"Email send error: {e}")
