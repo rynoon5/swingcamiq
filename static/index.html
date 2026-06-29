@@ -610,7 +610,7 @@ nav{background:var(--forest);height:60px;display:flex;align-items:center;padding
 // ── State ──────────────────────────────────────────────────────────────────────
 let videoFile = null;
 let currentSessionId = null;
-let pendingEmail = '';
+let pendingEmail = localStorage.getItem('sciq_email') || '';
 let slideshowFrames = [];
 let slideshowLabels = [];
 let slideshowIndex = 0;
@@ -669,6 +669,7 @@ async function submitEmailGate() {
   }
   emailInput.style.borderColor = '';
   pendingEmail = val;
+  if (val) localStorage.setItem('sciq_email', val);
   document.getElementById('emailModal').classList.add('hidden');
 
   // Check usage before proceeding
@@ -1173,7 +1174,8 @@ function escHtml(str) {
 // ── Dashboard ──────────────────────────────────────────────────────────────────
 async function loadDashboard() {
   try {
-    const sessions = await fetch('/sessions').then(r => r.json());
+    const _dashEmail = pendingEmail || localStorage.getItem('sciq_email') || '';
+    const sessions = await fetch('/sessions' + (_dashEmail ? '?email=' + encodeURIComponent(_dashEmail) : '')).then(r => r.json());
     document.getElementById('statSessions').textContent = sessions.length || '0';
 
     if (sessions.length > 0) {
@@ -1218,7 +1220,8 @@ async function loadDashboard() {
 // ── History ────────────────────────────────────────────────────────────────────
 async function loadHistory() {
   try {
-    const sessions = await fetch('/sessions').then(r => r.json());
+    const _histEmail = pendingEmail || localStorage.getItem('sciq_email') || '';
+    const sessions = await fetch('/sessions' + (_histEmail ? '?email=' + encodeURIComponent(_histEmail) : '')).then(r => r.json());
     const list = document.getElementById('historyList');
     list.innerHTML = '';
 
