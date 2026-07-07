@@ -920,7 +920,7 @@ Analyze everything you can see and return the JSON analysis."""
             }
         }
 
-        client = anthropic.Anthropic(api_key=api_key)
+        client = anthropic.Anthropic(api_key=api_key, max_retries=3)
         response = client.messages.create(
             model="claude-opus-4-5",
             max_tokens=4000,
@@ -1005,8 +1005,17 @@ Analyze everything you can see and return the JSON analysis."""
 
     except json.JSONDecodeError as e:
         raise HTTPException(500, f"JSON parse error: {str(e)}")
+    except anthropic.APIConnectionError as e:
+        print(f"Anthropic connection error: {e}")
+        raise HTTPException(503, "We couldn't reach the analysis engine. Please try again in a minute.")
+    except anthropic.APIStatusError as e:
+        print(f"Anthropic API status error ({e.status_code}): {e}")
+        if e.status_code == 429 or e.status_code >= 500:
+            raise HTTPException(503, "The analysis engine is briefly unavailable. Please try again in a minute.")
+        raise HTTPException(502, "The analysis engine returned an unexpected error. Please try again.")
     except anthropic.APIError as e:
-        raise HTTPException(500, f"Anthropic API error: {str(e)}")
+        print(f"Anthropic API error: {e}")
+        raise HTTPException(502, "The analysis engine returned an unexpected error. Please try again.")
     finally:
         os.unlink(tmp_path)
 
@@ -1109,17 +1118,24 @@ async def post_chat(session_id: str, body: dict):
 
     messages.append({"role": "user", "content": message})
 
-    client = anthropic.Anthropic(api_key=api_key)
-    response = client.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=500,
-        system=[{
-            "type": "text",
-            "text": CHAT_SYSTEM_PROMPT,
-            "cache_control": {"type": "ephemeral"}
-        }],
-        messages=messages,
-    )
+    client = anthropic.Anthropic(api_key=api_key, max_retries=3)
+    try:
+        response = client.messages.create(
+            model="claude-opus-4-5",
+            max_tokens=500,
+            system=[{
+                "type": "text",
+                "text": CHAT_SYSTEM_PROMPT,
+                "cache_control": {"type": "ephemeral"}
+            }],
+            messages=messages,
+        )
+    except anthropic.APIConnectionError as e:
+        print(f"Chat connection error: {e}")
+        raise HTTPException(503, "Your coach is briefly unavailable. Please try again in a moment.")
+    except anthropic.APIError as e:
+        print(f"Chat API error: {e}")
+        raise HTTPException(503, "Your coach is briefly unavailable. Please try again in a moment.")
     reply = response.content[0].text
 
     now = datetime.utcnow().isoformat()
