@@ -844,20 +844,101 @@ Analyze everything you can see and return the JSON analysis."""
                 "text": f"[Frame {i+1}/{len(frames_b64)}]"
             })
 
+        ANALYSIS_TOOL = {
+            "name": "submit_swing_analysis",
+            "description": "Submit the completed golf swing analysis. Fill every field per the coaching, calibration, and formatting guidance in the system prompt.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "overallScore": {
+                        "type": "number",
+                        "description": "0-100, curved to the golfer's self-reported skill level"
+                    },
+                    "overallRating": {
+                        "type": "string",
+                        "enum": ["Tour Ready", "Solid Amateur", "Good Club Golfer", "Developing", "Beginner"]
+                    },
+                    "handicapEstimate": {
+                        "type": "string",
+                        "description": "Honest handicap estimate, e.g. '5-12' or '18-25' or '30+'"
+                    },
+                    "headline": {
+                        "type": "string",
+                        "description": "One punchy sentence summarizing the swing"
+                    },
+                    "missExplanation": {
+                        "type": "string",
+                        "description": "Plain-language explanation of how the reported miss connects to what is seen, 2-3 sentences"
+                    },
+                    "phases": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "Phase name based on what is actually observed in the frame, not position-based"
+                                },
+                                "emoji": {"type": "string"},
+                                "rating": {
+                                    "type": "string",
+                                    "enum": ["great", "solid", "needs-work", "fix-first"]
+                                },
+                                "whatISee": {"type": "string"},
+                                "whyItMatters": {"type": "string"},
+                                "fix": {"type": "string"},
+                                "feelCue": {"type": "string"}
+                            },
+                            "required": ["name", "emoji", "rating", "whatISee", "whyItMatters", "fix", "feelCue"]
+                        }
+                    },
+                    "topPriority": {
+                        "type": "object",
+                        "properties": {
+                            "fault": {"type": "string"},
+                            "why": {"type": "string"},
+                            "drill": {
+                                "type": "string",
+                                "description": "Specific drill with exact steps, pulled from the DRILL LIBRARY matching the fault and club"
+                            },
+                            "feelCue": {"type": "string"}
+                        },
+                        "required": ["fault", "why", "drill", "feelCue"]
+                    },
+                    "strengths": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "2-3 genuine positives"
+                    },
+                    "encouragement": {
+                        "type": "string",
+                        "description": "1-2 sentences of genuine, specific encouragement"
+                    }
+                },
+                "required": ["overallScore", "overallRating", "handicapEstimate", "headline",
+                             "missExplanation", "phases", "topPriority", "strengths", "encouragement"]
+            }
+        }
+
         client = anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
             model="claude-opus-4-5",
             max_tokens=4000,
-            system=SYSTEM_PROMPT,
+            system=[{
+                "type": "text",
+                "text": SYSTEM_PROMPT,
+                "cache_control": {"type": "ephemeral"}
+            }],
+            tools=[ANALYSIS_TOOL],
+            tool_choice={"type": "tool", "name": "submit_swing_analysis"},
             messages=[{"role": "user", "content": content_blocks}]
         )
 
-        raw = response.content[0].text
-        json_match = re.search(r'\{[\s\S]*\}', raw)
-        if not json_match:
-            raise HTTPException(500, f"Could not parse analysis response: {raw[:200]}")
+        tool_block = next((b for b in response.content if b.type == "tool_use"), None)
+        if tool_block is None:
+            raise HTTPException(500, "Analysis response did not include structured output")
 
-        result = json.loads(json_match.group())
+        result = tool_block.input
         result["framesExtracted"] = len(frames_b64)
         result["frameUrls"] = frame_urls
         result["sessionId"] = session_id
@@ -1032,7 +1113,11 @@ async def post_chat(session_id: str, body: dict):
     response = client.messages.create(
         model="claude-opus-4-5",
         max_tokens=500,
-        system=CHAT_SYSTEM_PROMPT,
+        system=[{
+            "type": "text",
+            "text": CHAT_SYSTEM_PROMPT,
+            "cache_control": {"type": "ephemeral"}
+        }],
         messages=messages,
     )
     reply = response.content[0].text
